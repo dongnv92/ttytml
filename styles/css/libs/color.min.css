@@ -1,0 +1,146 @@
+/*Main Color*/
+/*//*/
+.color-text-link a:hover {
+  color: #42adb6;
+}
+.main-color {
+  color: #42adb6;
+}
+.main-bg {
+  transition: all 0.5s ease-out 0s;
+  background-color: #42adb6;
+}
+.main-bg:hover {
+  background-color: #348991;
+}
+.main-nav > span {
+  color: #42adb6;
+}
+.main-nav > ul > li.current-menu-item > a,
+.main-nav > ul > li:hover > a {
+  color: #fff;
+  background-color: #42adb6;
+}
+.box-search:hover span {
+  color: #fff;
+  background-color: #f5c531;
+}
+.right-menu ul li a:hover i {
+  color: #fff;
+  background-color: #f5c531;
+  border-color: #f5c531;
+}
+.business-bg {
+  background-color: #42adb6;
+}
+.mobile-bg {
+  background-color: #170171;
+}
+.mobile-color {
+  color: #170171;
+}
+.mobile-border {
+  border-color: #170171;
+}
+.fashion-bg {
+  background-color: #e42800;
+}
+.travel-bg {
+  background-color: #bbd93a;
+}
+.travel-color {
+  color: #bbd93a;
+}
+.travel-border {
+  border-color: #bbd93a !important;
+}
+.tech-bg {
+  background-color: #f5c531;
+}
+.type-icon i:before {
+  box-shadow: 0 0 0 0 #e42800 inset;
+  -webkit-box-shadow: 0 0 0 0 #e42800 inset;
+}
+.home-cat-thumb:hover .type-icon i:before {
+  background-color: transparent;
+  box-shadow: 0 0 0 1.5em #e42800 inset;
+}
+.list-cat-btn ul li a.business-bg:hover {
+  background-color: #348991;
+}
+.list-cat-btn ul li a.mobile-bg:hover {
+  background-color: #0d013e;
+}
+.list-cat-btn ul li a.fashion-bg:hover {
+  background-color: #b11f00;
+}
+.list-cat-btn ul li a.travel-bg:hover {
+  background-color: #9fbc24;
+}
+.list-cat-btn ul li a.tech-bg:hover {
+  background-color: #e8b20b;
+}
+.ion-social-facebook,
+.follow .fa-facebook {
+  background-color: #4c66a3;
+}
+.ion-social-twitter,
+.follow .fa-twitter {
+  background-color: #59c8ff;
+}
+.ion-social-pinterest,
+.follow .fa-pinterest {
+  background-color: #cb2027;
+}
+.ion-social-instagram,
+.follow .fa-instagram {
+  background-color: #517fa4;
+}
+.ion-social-vimeo {
+  background-color: #82b440;
+}
+.ion-social-googleplus {
+  background-color: #d73d32;
+}
+.ion-social-rss {
+  background-color: #ffba00;
+}
+.ion-social-linkedin {
+  background-color: #092975;
+}
+.single-share a {
+  color: #fff;
+}
+.world-head a:hover {
+  background-color: #348991;
+}
+blockquote {
+  border-left: 4px solid #42adb6;
+  color: #1b2b3a;
+}
+.post-detail {
+  color: rgba(27, 43, 58, 0.7);
+}
+.comment-respond form input[type=submit] {
+  color: #fff;
+  background-color: #42adb6;
+}
+.comment-respond form input[type=submit]:hover {
+  background-color: #348991;
+}
+.business .breaking-news .carousel ul li a:hover {
+  color: #42adb6;
+}
+.mobile .breaking-news .carousel ul li a:hover {
+  color: #170171;
+}
+.fashion .breaking-news .carousel ul li a:hover {
+  color: #e42800;
+}
+.travel .breaking-news .carousel ul li a:hover {
+  color: #bbd93a;
+}
+.tech .breaking-news .carousel ul li a:hover,
+.bottom-header .breaking-news .carousel ul li a:hover {
+  color: #f5c531;
+}

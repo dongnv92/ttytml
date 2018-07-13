@@ -1,0 +1,17 @@
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+RewriteRule ^login$ login.php [L]
+RewriteRule ^logout$ logout.php [L]
+RewriteRule ^category/(.*)-trang-(.*).html$ pages/category.php?url=$1&page=$2 [L]
+RewriteRule ^category/(.*).html$ pages/category.php?url=$1 [L]
+RewriteRule ^dl/(.*)$ pages/download.php?id=$1 [L]
+RewriteRule ^(.*).html$ pages/post.php?url=$1 [L]
+
+
+
+
+
+
+
