@@ -12,8 +12,8 @@ if(!$user_id){
     header('location:'._URL_LOGIN);
 }
 $active_menu    = 'tasks';
-$css_plus       = array('app-assets/vendors/css/forms/icheck/icheck.css','app-assets/css/plugins/forms/checkboxes-radios.css');
-$js_plus        = array('app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js');
+$css_plus       = array('app-assets/vendors/css/forms/icheck/icheck.css','app-assets/css/plugins/forms/checkboxes-radios.css','app-assets/css/chosen.css');
+$js_plus        = array('app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js','app-assets/js/chosen.jquery.js','app-assets/js/prism.js','app-assets/js/init.js');
 
 switch ($act){
     case 'result':
@@ -145,9 +145,15 @@ switch ($act){
             }
             if(!$tasks_start){
                 $error['tasks_start']   = getViewError($lang['error_empty_this_fiel']);
+            }else{
+                $tasks_start = DateTime::createFromFormat('d/m/Y', $tasks_start);
+                $tasks_start = $tasks_start->format('Y/m/d');
             }
             if(!$tasks_end){
                 $error['tasks_end']     = getViewError($lang['error_empty_this_fiel']);
+            }else{
+                $tasks_end = DateTime::createFromFormat('d/m/Y', $tasks_end);
+                $tasks_end = $tasks_end->format('Y/m/d');
             }
 
             if(!$users_list){
@@ -242,8 +248,19 @@ switch ($act){
             }
 
         }
-        $css_plus       = array('app-assets/vendors/css/extensions/datedropper.min.css','app-assets/vendors/css/extensions/timedropper.min.css','app-assets/vendors/css/forms/icheck/icheck.css','app-assets/css/plugins/forms/checkboxes-radios.css');
-        $js_plus        = array('app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js', 'app-assets/vendors/js/extensions/datedropper.min.js', 'app-assets/vendors/js/extensions/timedropper.min.js');
+        $css_plus       = array(
+            'app-assets/vendors/css/extensions/datedropper.min.css',
+            'app-assets/vendors/css/extensions/timedropper.min.css',
+            'app-assets/vendors/css/forms/icheck/icheck.css',
+            'app-assets/css/plugins/forms/checkboxes-radios.css',
+            'app-assets/css/chosen.css');
+        $js_plus        = array(
+            'app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js',
+            'app-assets/vendors/js/extensions/datedropper.min.js',
+            'app-assets/vendors/js/extensions/timedropper.min.js',
+            'app-assets/js/chosen.jquery.js',
+            'app-assets/js/prism.js',
+            'app-assets/js/init.js');
         $admin_title    = $lang['tasks_add'];
         require_once 'header.php';
         ?>
@@ -267,10 +284,10 @@ switch ($act){
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="card-title"><?php echo $lang['tasks_date_start']?> <small>(Năm/Tháng/Ngày)</small></h4>
+                                    <h4 class="card-title"><?php echo $lang['tasks_date_start']?> <small>(Ngày/Tháng/Năm)</small></h4>
                                 </div>
                                 <div class="card-body">
-                                    <input value="<?php echo date('Y/m/d', _CONFIG_TIME);?>" type="text" name="tasks_start" class="form-control input-lg" id="animate" placeholder="Date Dropper">
+                                    <input value="<?php echo date('d/m/Y', _CONFIG_TIME);?>" type="text" name="tasks_start" class="form-control input-lg" id="animate" placeholder="Date Dropper">
                                     <?php if($error['tasks_start']){ echo $error['tasks_start']; }?>
                                 </div>
                             </div>
@@ -278,7 +295,7 @@ switch ($act){
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h4 class="card-title"><?php echo $lang['tasks_date_end']?> <small>(Năm/Tháng/Ngày)</small></h4>
+                                    <h4 class="card-title"><?php echo $lang['tasks_date_end']?> <small>(Ngày/Tháng/Năm)</small></h4>
                                 </div>
                                 <div class="card-body">
                                     <input type="text" name="tasks_end" class="form-control input-lg" id="animate_1" value="<?php echo $tasks_end;?>" placeholder="Date Dropper">
@@ -288,12 +305,12 @@ switch ($act){
                                             $('#animate').dateDropper({
                                                 dropWidth: 200,
                                                 lang: 'vi',
-                                                format: 'Y/m/d'
+                                                format: 'd/m/Y'
                                             });
                                             $('#animate_1').dateDropper({
                                                 dropWidth: 200,
                                                 lang: 'vi',
-                                                format: 'Y/m/d'
+                                                format: 'd/m/Y'
                                             });
                                         });
                                     </script>
@@ -317,57 +334,67 @@ switch ($act){
                         <div class="card-header"><h4 class="card-title"><?php echo $admin_title;?></h4> </div>
                         <div class="card-body text-center"><input type="submit" name="submit" class="btn round btn-success" value="<?php echo $admin_title;?>"></div>
                     </div>
+                    <!-- Danh sách thành viên -->
                     <div class="card">
                         <div class="card-header">
                             <h4 class="card-title"><?php echo $lang['tasks_input_users'];?></h4>
                         </div>
                         <div class="card-body">
-                            <div class="vertical-scroll scroll-example height-300">
+                            <select name="tasks_users[]" data-placeholder="Nhập tên người nhận" multiple class="chosen-select-width form-control">
+                                <option value=""></option>
                                 <?php
                                 $users_list = getGlobalAll('dong_users', '');
                                 foreach ($users_list AS $users){
-                                    echo '<label><input class="icheckbox_flat-blue" type="checkbox" '. ((in_array($users['users_id'], $tasks_users)) ? 'checked="checked"' : '') .' name="tasks_users[]" value="'. $users['users_id'] .'"> '. $users['users_name'] .'</label><hr />';
+                                    echo '<option value="'. $users['users_id'] .'" '. ((in_array($users['users_id'], $tasks_users)) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
                                 }
                                 ?>
-                            </div>
+                            </select>
                             <?php if($error['tasks_users']){ echo $error['tasks_users']; }?>
                         </div>
                     </div>
+                    <!-- Danh sách nhóm thành viên -->
                     <div class="card">
-                        <div class="card-header"><h4 class="card-title">Nhóm thành viên</h4></div>
+                        <div class="card-header"><h4 class="card-title">Group nhận việc</h4></div>
                         <div class="card-body">
-                            <?php
-                            $group_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'users_group'));
-                            foreach ($group_list AS $users_group){
-                            echo '<label><input class="icheckbox_flat-blue" type="checkbox" '. ((in_array($users_group['id'], $tasks_users_group)) ? 'checked="checked"' : '') .' name="tasks_users_group[]" value="'. $users_group['id'] .'"> '. $users_group['category_name'] .'</label><hr />';
-                            }
-                            ?>
+                            <select name="tasks_users_group[]" data-placeholder="Nhập Group người nhận việc" multiple class="chosen-select-width form-control">
+                                <option value=""></option>
+                                <?php
+                                $group_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'users_group'));
+                                foreach ($group_list AS $users_group){
+                                    echo '<option value="'. $users_group['id'] .'" '. ((in_array($users_group['id'], $tasks_users_group)) ? 'selected' : '') .'>'. $users_group['category_name'] .'</option>';
+                                }
+                                ?>
+                            </select>
                         </div>
                     </div>
+                    <!-- Danh sách chức vụ -->
                     <div class="card">
                         <div class="card-header"><h4 class="card-title">Chức vụ</h4></div>
                         <div class="card-body">
-                            <div class="vertical-scroll scroll-example height-300">
+                            <select name="tasks_users_role[]" data-placeholder="Nhập các chức vụ nhận việc" multiple class="chosen-select-width form-control">
+                                <option value=""></option>
                                 <?php
                                 $role_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'role'));
                                 foreach ($role_list AS $role_group){
-                                    echo '<label><input class="icheckbox_flat-blue" type="checkbox" '. ((in_array($role_group['id'], $tasks_users_role)) ? 'checked="checked"' : '') .' name="tasks_users_role[]" value="'. $role_group['id'] .'"> '. $role_group['category_name'] .'</label><hr />';
+                                    echo '<option value="'. $role_group['id'] .'" '. ((in_array($role_group['id'], $tasks_users_role)) ? 'selected' : '') .'>'. $role_group['category_name'] .'</option>';
                                 }
                                 ?>
-                            </div>
+                            </select>
                         </div>
                     </div>
+                    <!-- Danh sách phòng ban -->
                     <div class="card">
                         <div class="card-header"><h4 class="card-title">Phòng ban</h4></div>
                         <div class="card-body">
-                            <div class="vertical-scroll scroll-example height-300">
+                            <select name="tasks_users_room[]" data-placeholder="Nhập các phòng ban nhận việc" multiple class="chosen-select-width form-control">
+                                <option value=""></option>
                                 <?php
                                 $room_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'room'));
                                 foreach ($room_list AS $room_group){
-                                    echo '<label><input class="icheckbox_flat-blue" type="checkbox" '. ((in_array($room_group['id'], $tasks_users_room)) ? 'checked="checked"' : '') .' name="tasks_users_room[]" value="'. $room_group['id'] .'"> '. $room_group['category_name'] .'</label><hr />';
+                                    echo '<option value="'. $room_group['id'] .'" '. ((in_array($room_group['id'], $tasks_users_room)) ? 'selected' : '') .'>'. $room_group['category_name'] .'</option>';
                                 }
                                 ?>
-                            </div>
+                            </select>
                         </div>
                     </div>
                     <div class="card">
