@@ -115,7 +115,7 @@ function getNewsTop($limit = 5){
                         ?>
                             <!-- Item -->
                             <div class="post-item">
-                                <div class="post-thumb"><a href="<?php echo getUrlPost($datas['id']);?>"><img src="<?php echo $datas['post_images'];?>" alt=""></a></div>
+                                <div class="post-thumb"><a href="<?php echo getUrlPost($datas['id']);?>"><img src="<?php echo $datas['post_images'] ? $datas['post_images'] : _URL_HOME.'/images/post/default.jpg';?>" alt=""></a></div>
                                 <div class="slide-post-info">
                                     <a href="<?php echo getUrlPost($datas['id']);?>"><b><?php echo $datas['post_title'];?></b></a>
                                     <ul class="post-list-info"><li><i class="ion-android-calendar"></i><span> <?php echo date('d/m/Y', $datas['post_time']);?></span></li></ul>

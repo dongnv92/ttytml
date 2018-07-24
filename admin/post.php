@@ -230,34 +230,34 @@ switch ($act){
             }
 
             if(!$error){
-                if(checkFilesUploaded('post_images')) {
-                    require_once '../includes/lib/class.uploader.php';
-                    $uploader = new Uploader();
-                    $data_upload = $uploader->upload($_FILES['post_images'], array(
-                        'limit'         => 10, //Maximum Limit of files. {null, Number}
-                        'maxSize'       => 10, //Maximum Size of files {null, Number(in MB's)}
-                        'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
-                        'required'      => false, //Minimum one file is required for upload {Boolean}
-                        'uploadDir'     => '../images/post/', //Upload directory {String}
-                        'title'         => array('auto', 10), //New file name {null, String, Array} *please read documentation in README.md
-                        'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
-                        'replace'       => false, //Replace the file if it already exists  {Boolean}
-                        'perms'         => null, //Uploaded file permisions {null, Number}
-                        'onCheck'       => null, //A callback function name to be called by checking a file for errors (must return an array) | ($file) | Callback
-                        'onError'       => null, //A callback function name to be called if an error occured (must return an array) | ($errors, $file) | Callback
-                        'onSuccess'     => null, //A callback function name to be called if all files were successfully uploaded | ($files, $metas) | Callback
-                        'onUpload'      => null, //A callback function name to be called if all files were successfully uploaded (must return an array) | ($file) | Callback
-                        'onComplete'    => null, //A callback function name to be called when upload is complete | ($file) | Callback
-                        'onRemove'      => 'onFilesRemoveCallback' //A callback function name to be called by removing files (must return an array) | ($removed_files) | Callback
-                    ));
-                    if($data_upload['isComplete']){
-                        $files = $data_upload['data']['files'];
-                        foreach ($files AS $file){
-                            $file_name = explode('/', $file);
-                            $file_name = $file_name[(count($file_name) - 1)];
-                        }
+                // Upload File
+                require_once '../includes/lib/class.uploader.php';
+                $uploader = new Uploader();
+                $data_upload = $uploader->upload($_FILES['post_images'], array(
+                    'limit'         => 10, //Maximum Limit of files. {null, Number}
+                    'maxSize'       => 10, //Maximum Size of files {null, Number(in MB's)}
+                    'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
+                    'required'      => false, //Minimum one file is required for upload {Boolean}
+                    'uploadDir'     => '../images/post/', //Upload directory {String}
+                    'title'         => array('auto', 10), //New file name {null, String, Array} *please read documentation in README.md
+                    'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
+                    'replace'       => false, //Replace the file if it already exists  {Boolean}
+                    'perms'         => null, //Uploaded file permisions {null, Number}
+                    'onCheck'       => null, //A callback function name to be called by checking a file for errors (must return an array) | ($file) | Callback
+                    'onError'       => null, //A callback function name to be called if an error occured (must return an array) | ($errors, $file) | Callback
+                    'onSuccess'     => null, //A callback function name to be called if all files were successfully uploaded | ($files, $metas) | Callback
+                    'onUpload'      => null, //A callback function name to be called if all files were successfully uploaded (must return an array) | ($file) | Callback
+                    'onComplete'    => null, //A callback function name to be called when upload is complete | ($file) | Callback
+                    'onRemove'      => 'onFilesRemoveCallback' //A callback function name to be called by removing files (must return an array) | ($removed_files) | Callback
+                ));
+                if($data_upload['isComplete']){
+                    $files = $data_upload['data']['files'];
+                    foreach ($files AS $file){
+                        $file_name = explode('/', $file);
+                        $file_name = $file_name[(count($file_name) - 1)];
                     }
                 }
+                // Upload File
                 $data = array(
                     'post_title'    => $post_name,
                     'post_content'  => $post_content,
@@ -332,12 +332,7 @@ switch ($act){
                     <div class="card">
                         <div class="card-header"><h4 class="card-title">Ảnh bài viết</h4> </div>
                         <div class="card-body">
-                            <fieldset class="form-group">
-                                <div class="custom-file">
-                                    <input type="file" class="custom-file-input" name="post_images" id="inputGroupFile01">
-                                    <label class="custom-file-label" for="inputGroupFile01">Chọn File</label>
-                                </div>
-                            </fieldset>
+                            <fieldset class="form-group"><div class="col"><input type="file" class="form-control-file" name="post_images"></div></fieldset>
                         </div>
                     </div>
                 </div>
