@@ -42,7 +42,7 @@ require_once '../includes/core.php';
     <link rel="stylesheet" type="text/css" href="../includes/css/themes/jquery.filer-dragdropbox-theme.css">
     <?php
     foreach ($css_plus AS $css){
-        echo '<link rel="stylesheet" type="text/css" href="'. $css .'">';
+        echo '<link rel="stylesheet" type="text/css" href="'. $css .'">'."\n";
     }
     ?>
 </head>
@@ -81,8 +81,10 @@ require_once '../includes/core.php';
                             <span class="mr-1">Hi,<span class="user-name text-bold-700"><?php echo $data_user['users_name'];?></span></span>
                             <span class="avatar avatar-online"><img src="images/avatar.png" alt="avatar"><i></i></span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right"><a class="dropdown-item" href="<?php echo _URL_ADMIN.'/users.php?act=detail&id='.$data_user['users_id'];?>"><i class="ft-user"></i> Sửa hồ sơ</a>
-                            <div class="dropdown-divider"></div><a class="dropdown-item" href="<?php echo _URL_ADMIN;?>"><i class="ft-power"></i> Thoát</a>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="<?php echo _URL_ADMIN.'/users.php?act=detail&id='.$data_user['users_id'];?>"><i class="ft-user"></i> Xem trang cá nhân</a>
+                            <div class="dropdown-divider"></div><a class="dropdown-item" href="<?php echo _URL_ADMIN.'/users.php?act=change_info';?>"><i class="la la-gears"></i> Sửa trang cá nhân</a>
+                            <div class="dropdown-divider"></div><a class="dropdown-item" href="<?php echo _URL_LOGOUT;?>"><i class="ft-power"></i> Thoát</a>
                         </div>
                     </li>
                     <li class="dropdown dropdown-notification nav-item">
@@ -155,7 +157,7 @@ require_once '../includes/core.php';
                 <ul class="menu-content">
                     <li <?php echo ($active_menu == 'tasks' && in_array($act, array('', 'detail'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/tasks.php"><?php echo $lang['tasks_manager'];?></a></li>
                     <li <?php echo ($active_menu == 'tasks' && in_array($act, array('add'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/tasks.php?act=add"><?php echo $lang['tasks_add'];?></a></li>
-                    <li <?php echo ($active_menu == 'tasks' && in_array($type, array('result'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/tasks.php?act=result"><?php echo $lang['tasks_result'];?></a></li>
+                    <li <?php echo ($active_menu == 'tasks' && in_array($act, array('report'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/tasks.php?act=report">Thêm báo cáo</a></li>
                 </ul>
             </li>
             <li class=" nav-item">
@@ -200,8 +202,7 @@ require_once '../includes/core.php';
             <li class=" nav-item">
                 <a href="#"><i class="la la-angellist"></i><span class="menu-title" data-i18n="nav.page_layouts.main"><?php echo $lang['label_report'];?></span></a>
                 <ul class="menu-content">
-                    <li <?php echo ($active_menu == 'report' && !$act ? 'class="active"' : ''); ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/report">Xem báo cáo</a></li>
-                    <li <?php echo ($active_menu == 'report' && in_array($act, array('admins')) ? 'class="active"' : ''); ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/upload.php?act=admins">Xuất báo cáo</a></li>
+                    <li <?php echo ($active_menu == 'report' && !$act ? 'class="active"' : ''); ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/report.php">Xem báo cáo</a></li>
                 </ul>
             </li>
             <li class=" nav-item"><a href="<?php echo _URL_HOME;?>"><i class="la la-home"></i><span class="menu-title">Trang Chủ</span></a></li>

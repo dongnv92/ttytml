@@ -5,6 +5,78 @@ if(!$user_id){
 }
 $active_menu = 'users';
 switch ($act){
+    case 'change_info':
+        $users = getGlobal(_TABLE_USERS, array('users_id' => $user_id));
+        if($submit) {
+            $users_pass         = isset($_POST['users_pass'])       ? trim($_POST['users_pass'])        : '';
+            $users_repass       = isset($_POST['users_repass'])     ? trim($_POST['users_repass'])      : '';
+            $users_email        = isset($_POST['users_email'])      ? trim($_POST['users_email'])       : '';
+            $users_phone        = isset($_POST['users_phone'])      ? trim($_POST['users_phone'])       : '';
+            $users_name         = isset($_POST['users_name'])       ? trim($_POST['users_name'])        : '';
+
+            // Check Error
+            $error = array();
+            if(($users_pass && $users_repass) && $users_pass != $users_repass){
+                $error['users_pass'] = getViewError($lang['users_pass_nosame']);
+            }
+            if(!$users_email){
+                $error['users_email'] = getViewError($lang['error_empty_this_fiel']);
+            }
+            if($users_email != $users['users_email'] && checkGlobal(_TABLE_USERS, array('users_email' => $users_email)) > 0){
+                $error['users_name_login'] = $lang['users_email_exits'];
+            }
+            if(!$users_name){
+                $error['users_name'] = getViewError($lang['error_empty_this_fiel']);
+            }
+
+            if(!$error){
+                $data = array(
+                    'users_email'   => $users_email,
+                    'users_phone'   => $users_phone,
+                    'users_pass'    => ($users_pass && $users_repass) && ($users_pass == $users_repass) ? md5($users_pass) : $users['users_pass'],
+                    'users_name'    => $users_name
+                );
+                updateGlobal(_TABLE_USERS, $data, array('users_id' => $user_id));
+                $users = getGlobal(_TABLE_USERS, array('users_id' => $user_id));
+            }
+        }
+        $admin_title = $lang['users_update'];
+        require_once 'header.php';
+        ?>
+        <form action="" class="form form-horizontal" method="post">
+            <div class="row horizontal-form-layouts">
+                <div class="col-md-8">
+                    <div class="card"> <!--Content-->
+                        <div class="card-header"><h4 class="card-title"><?php echo $lang['users_add'];?></h4></div>
+                        <div class="card-body">
+                            <div class="text-danger text-left"><small>* Nếu không thay đổi mật khẩu thì không cần nhập vào ô mất khẩu, nếu thay đổi mật khẩu, bạn sẽ phải đăng nhập lại.</small></div><br />
+                            <?php if($submit && !$error){echo getAlert('success', 'Thông tin đã được thay đổi');} ?>
+                            <div class="form-group row">
+                                <label class="col-md-3 label-control" for="projectinput1">Tên đăng nhập</label>
+                                <div class="col-md-9"><input type="text" class="form-control" name="" disabled value="<?php echo $users['users_user'];?>"></div>
+                            </div>
+                            <?php echo inputFormPassword(array('label' => $lang['label_password'], 'name' => 'users_pass', 'value' => $users_pass, 'error' => $error['users_pass'])); ?>
+                            <?php echo inputFormPassword(array('label' => $lang['users_repass'], 'name' => 'users_repass', 'value' => $users_repass)); ?>
+                            <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_email'], 'name' => 'users_email', 'value' => $users['users_email'], 'require' => TRUE, 'error' => $error['users_email'])); ?>
+                            <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_phone'], 'name' => 'users_phone', 'value' => $users['users_phone'], 'error' => $error['users_phone'])); ?>
+                            <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_name'], 'name' => 'users_name', 'value' => $users['users_name'], 'require' => TRUE, 'error' => $error['users_name'])); ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><h4 class="card-title">Chỉnh sửa</h4> </div>
+                        <div class="card-body">
+                            <div class="form-actions text-center">
+                                <input type="submit" name="submit" class="btn btn-outline-success round" value="Chỉnh sửa thông tin">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <?php
+        break;
     case 'del':
         // Check Roles
         if(!checkRole('users_edit_del')){
@@ -348,7 +420,7 @@ switch ($act){
             $users_room         = isset($_POST['users_room'])       ? trim($_POST['users_room'])        : '';
             $users_status       = isset($_POST['users_status'])     ? trim($_POST['users_status'])      : 1;
 
-            // Check Error.  Mệt Mỏi quá -_- PUCCA
+            // Check Error
             $error = array();
             if(!$users_name_login){
                 $error['users_name_login'] = getViewError($lang['error_empty_this_fiel']);

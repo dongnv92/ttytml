@@ -165,6 +165,7 @@ $lang['report_detail']          = 'Chi tiết kết quả làm việc';
 
 // Notification
 $lang['notification_add_task']          = '{users_send} đã gửi cho bạn 1 công việc mới';
+$lang['notification_add_report']        = '{users_send} vừa thêm 1 báo cáo';
 $lang['notification_add_comment']       = '{users_send} đã bình luận trong công việc của bạn';
 $lang['notification_task_close']        = '{users_send} vừa kết thúc và tự đánh giá 1 công việc';
 $lang['notification_task_send_close']   = '{users_send} Vừa đánh giá công việc của bạn';

@@ -16,6 +16,240 @@ $css_plus       = array('app-assets/vendors/css/forms/icheck/icheck.css','app-as
 $js_plus        = array('app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js','app-assets/js/chosen.jquery.js','app-assets/js/prism.js','app-assets/js/init.js');
 
 switch ($act){
+    case 'del':
+        $tasks = getGlobal(_TABLE_TASKS, array('id' => $id));
+
+        // Kiểm tra nếu việc làm không có thì thông báo lỗi
+        if (!$tasks){
+            $admin_title    = $lang['tasks_detail'];
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => $lang['tasks_empty_content']));
+            break;
+        }
+
+        // Kiểm tra nếu user dăng nhập không phải người gửi không xóa được
+        if($tasks['task_from'] != $user_id){
+            $admin_title    = $lang['tasks_detail'];
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => $lang['tasks_empty_content']));
+            break;
+        }
+
+        if($submit){
+            deleteGlobal('dong_comment', array('comment_type' => 'tasks', 'comment_value' => $id));
+            deleteGlobal('dong_files', array('files_type' => 'tasks', 'files_value' => $id));
+            deleteGlobal('dong_group', array('group_type' => 'tasks', 'group_id' => $id));
+            deleteGlobal('dong_notification', array('notification_type' => 'tasks', 'notification_value' => $id));
+            deleteGlobal('dong_task', array('id' => $id));
+            header('location:'._URL_ADMIN.'/tasks.php');
+        }
+
+        $admin_title = $lang['post_del'];
+        require_once 'header.php';
+        ?>
+        <form action="" method="post">
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+                        <div class="card-header"><h4 class="card-title"><?php echo $lang['post_del'];?></h4></div>
+                        <div class="card-body text-center">
+                            Bạn có chắc chắn muốn xóa bài viết <strong><?php echo $tasks['task_name'];?></strong> không<hr/>
+                            <?php echo _BUTTON_BACK;?> <input type="submit" name="submit" class="btn btn round btn-outline-success" value="<?php echo $lang['label_del'];?>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <?php
+        break;
+    case 'report':
+        if($submit){
+            $tasks_name 	    = isset($_POST['tasks_name'])       ? trim($_POST['tasks_name'])        : '';
+            $tasks_content      = isset($_POST['tasks_content'])    ? trim($_POST['tasks_content'])     : '';
+            $to_star            = isset($_POST['to_star'])          ? trim($_POST['to_star'])           : '';
+            $tasks_users 	    = isset($_POST['tasks_users'])      ? $_POST['tasks_users']             : '';
+            $error              = array();
+            if(!$to_star){
+                $error['to_star'] = 'Bạn cần nhập đánh giá của mình';
+            }
+            if(!$tasks_name){
+                $error['tasks_name'] = 'Bạn cần nhập tiêu đề';
+            }
+            if(!$tasks_content){
+                $error['tasks_content'] = 'Bạn cần nhập nội dung';
+            }
+
+            if(!$error){
+                $data = array(
+                    'task_name'         => $tasks_name,
+                    'task_content'      => $tasks_content,
+                    'task_type'         => 'report',
+                    'task_from'         => $user_id,
+                    'task_start'        => date('Y/m/d', _CONFIG_TIME),
+                    'task_end'          => date('Y/m/d', _CONFIG_TIME),
+                    'task_time_rep'     => _CONFIG_TIME,
+                    'task_from_star'    => $to_star,
+                    'task_to_star'      => $to_star,
+                    'task_to_star_user' => $user_id,
+                    'task_status'       => 2,
+                    'task_time'         => _CONFIG_TIME,
+                    'task_guide'        => ''
+                );
+                // Thêm công việc
+                $add = insertGlobal(_TABLE_TASKS, $data);
+                if(!$add){
+                    $admin_title    = $admin_title;
+                    require_once 'header.php';
+                    echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Lỗi khi thêm công việc'));
+                    break;
+                }
+
+                // Thêm người nhận là chính mình
+                if(!insertGlobal(_TABLE_GROUP, array(
+                    'group_type'    => 'tasks',
+                    'group_id'      => $add,
+                    'group_value'   => $user_id,
+                    'group_users'   => $user_id,
+                    'group_time'    => _CONFIG_TIME
+                ))){
+                    $admin_title    = $admin_title;
+                    require_once 'header.php';
+                    echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Lỗi khi thêm người nhận việc'));
+                    break;
+                }
+
+                // Gửi thông báo cho người nhận thông báo
+                foreach ($tasks_users AS $list_users){
+                    $data_notification = array(
+                        'notification_send'     => $user_id,
+                        'notification_to'       => $list_users['users_id'],
+                        'notification_type'     => $active_menu,
+                        'notification_value'    => $add,
+                        'notification_content'  => 'notification_add_report',
+                        'notification_time'     => _CONFIG_TIME
+                    );
+                    if($user_id != $list_users['users_id']){
+                        if(!insertGlobal(_TABLE_NOTIFICATION, $data_notification)){
+                            require_once 'header.php';
+                            echo getAdminPanelError(array('header' => $admin_title, 'message' => 'Notification User: '.$lang['error_mysql'] ));
+                            break;
+                        }
+                    }
+                }
+                // Xử lý Upload File
+                require_once '../includes/lib/class.uploader.php';
+                $uploader   = new Uploader();
+                $path       =  '../files/tasks';
+                $data_upload = $uploader->upload($_FILES['tasks_files'], array(
+                    'limit'         => 10, //Maximum Limit of files. {null, Number}
+                    'maxSize'       => 10, //Maximum Size of files {null, Number(in MB's)}
+                    'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
+                    'required'      => false, //Minimum one file is required for upload {Boolean}
+                    'uploadDir'     => $path.'/', //Upload directory {String}
+                    'title'         => array('auto', 20), //New file name {null, String, Array} *please read documentation in README.md
+                    'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
+                    'replace'       => false, //Replace the file if it already exists  {Boolean}
+                    'perms'         => null, //Uploaded file permisions {null, Number}
+                    'onCheck'       => null, //A callback function name to be called by checking a file for errors (must return an array) | ($file) | Callback
+                    'onError'       => null, //A callback function name to be called if an error occured (must return an array) | ($errors, $file) | Callback
+                    'onSuccess'     => null, //A callback function name to be called if all files were successfully uploaded | ($files, $metas) | Callback
+                    'onUpload'      => null, //A callback function name to be called if all files were successfully uploaded (must return an array) | ($file) | Callback
+                    'onComplete'    => null, //A callback function name to be called when upload is complete | ($file) | Callback
+                    'onRemove'      => 'onFilesRemoveCallback' //A callback function name to be called by removing files (must return an array) | ($removed_files) | Callback
+                ));
+
+                if($data_upload['isComplete']){
+                    $files = $data_upload['data']['files'];
+                    foreach ($files AS $file){
+                        $file_name = explode('/', $file);
+                        $file_name = $file_name[(count($file_name) - 1)];
+                        insertGlobal('dong_files', array(
+                            'files_name'    => $file_name,
+                            'files_url'     => 'files/tasks/'.$file_name,
+                            'files_value'   => $add,
+                            'files_type'    => 'tasks',
+                            'files_users'   => $user_id,
+                            'files_time'    => _CONFIG_TIME
+                        ));
+                    }
+                }
+                // Xử lý Upload File
+                header('location:'._URL_ADMIN.'/tasks.php?act=detail&id='.$add);
+            }
+        }
+        $admin_title = 'Tạo báo cáo';
+        require_once 'header.php';
+        ?>
+        <form action="" method="post" enctype="multipart/form-data">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header"><h4 class="card-title"><?php echo $admin_title?></h4></div>
+                                <div class="card-body">
+                                    <?php echo inputFormText(array('name' => 'tasks_name', 'value' => $tasks_name, 'require' => TRUE, 'label' => 'Nhập tiêu đề', 'error' => $error['tasks_name']));?>
+                                    <?php echo inputFormTextarea(array('name' => 'tasks_content', 'value' => $tasks_content, 'error' => $error['tasks_content']));?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header"><h4 class="card-title"><?php echo $admin_title;?></h4> </div>
+                        <div class="card-body text-center"><input type="submit" name="submit" class="btn round btn-outline-cyan" value="<?php echo $admin_title;?>"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title">Những người nhận thông báo</h4>
+                        </div>
+                        <div class="card-body">
+                            <select name="tasks_users[]" data-placeholder="Nhập tên người nhận thông báo" multiple class="chosen-select-width form-control">
+                                <option value=""></option>
+                                <?php
+                                $users_list = getGlobalAll('dong_users', '', array('order_by_row' => 'users_name', 'order_by_value' => 'ASC'));
+                                foreach ($users_list AS $users){
+                                    echo '<option value="'. $users['users_id'] .'" '. ((in_array($users['users_id'], $tasks_users)) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h4 class="card-title">Tự đánh giá kết quả công việc</h4> </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col text-center">
+                                    <label class="text-success"><input type="radio" name="to_star" value="3"><hr />
+                                    <strong><?php echo $lang['tasks_star_3']?></strong></label>
+                                </div>
+                                <div class="col text-center">
+                                    <label class="text-info"><input type="radio" name="to_star" value="2"><hr />
+                                    <strong><?php echo $lang['tasks_star_2']?></strong></label>
+                                </div>
+                                <div class="col text-center">
+                                    <label class="text-danger"><input type="radio" name="to_star" value="1"><hr />
+                                    <strong><?php echo $lang['tasks_star_1']?></strong></label>
+                                </div>
+                            </div>
+                            <hr />
+                            <?php echo $error['to_star'] ? $error['to_star'] : '';?>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="card-title"><?php echo $lang['tasks_input_files']?></h4>
+                        </div>
+                        <div class="card-body">
+                            <fieldset class="form-group"><input type="file" class="form-control-file" name="tasks_files[]" multiple="multiple"></fieldset>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <?php
+        break;
     case 'result':
         $date           = date('Y-m-d', strtotime('monday this week', _CONFIG_TIME)); // monday
         $time_sunday    = date("Y-m-d", strtotime('sunday this week', strtotime($date)));
@@ -108,7 +342,6 @@ switch ($act){
             $tasks_users_role 	= isset($_POST['tasks_users_role']) ? $_POST['tasks_users_role']  : '';
             $tasks_users_room 	= isset($_POST['tasks_users_room']) ? $_POST['tasks_users_room']  : '';
             $users_list         = array();
-
             // Thành viên được chọn
             $users_list         = $tasks_users;
 
@@ -171,6 +404,7 @@ switch ($act){
                 $data = array(
                         'task_name'         => $tasks_name,
                         'task_content'      => $tasks_content,
+                        'task_type'         => 'tasks',
                         'task_from'         => $user_id,
                         'task_start'        => $tasks_start,
                         'task_end'          => $tasks_end,
@@ -332,7 +566,7 @@ switch ($act){
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header"><h4 class="card-title"><?php echo $admin_title;?></h4> </div>
-                        <div class="card-body text-center"><input type="submit" name="submit" class="btn round btn-success" value="<?php echo $admin_title;?>"></div>
+                        <div class="card-body text-center"><input type="submit" name="submit" class="btn round btn-outline-cyan" value="<?php echo $admin_title;?>"></div>
                     </div>
                     <!-- Danh sách thành viên -->
                     <div class="card">
@@ -343,7 +577,7 @@ switch ($act){
                             <select name="tasks_users[]" data-placeholder="Nhập tên người nhận" multiple class="chosen-select-width form-control">
                                 <option value=""></option>
                                 <?php
-                                $users_list = getGlobalAll('dong_users', '');
+                                $users_list = getGlobalAll('dong_users', '', array('order_by_row' => 'users_name', 'order_by_value' => 'ASC'));
                                 foreach ($users_list AS $users){
                                     echo '<option value="'. $users['users_id'] .'" '. ((in_array($users['users_id'], $tasks_users)) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
                                 }
@@ -414,7 +648,7 @@ switch ($act){
         $tasks = getGlobal('dong_task', array('id' => $id));
 
         // Kiểm tra nếu user dăng nhập không phải người gửi hoặc người nhận thì không xem được
-        if($tasks['task_from'] != $user_id && checkGlobal(_TABLE_GROUP, array('group_type' => 'tasks', 'group_id' => $id, 'group_value' => $user_id)) == 0){
+        if($tasks['task_from'] != $user_id && checkGlobal(_TABLE_GROUP, array('group_type' => 'tasks', 'group_id' => $id, 'group_value' => $user_id)) == 0 && $tasks['task_type'] == 'tasks'){
             $admin_title    = $lang['tasks_detail'];
             require_once 'header.php';
             echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => $lang['tasks_empty_content']));
@@ -779,6 +1013,9 @@ switch ($act){
                                     <td><a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $tasks['task_to_star_user'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $tasks['task_to_star_user']), array('onecolum' => 'users_name')) .'</a></td>
                                     </tr>';
                                 }
+                                if($tasks['task_from'] == $user_id){
+                                    echo '<td colspan="2"><a href="tasks.php?act=del&id='. $id .'" class="text-danger"><i>* Xóa công việc này</i></a> </td>';
+                                }
                                 ?>
                             </table>
                         </div>
@@ -843,6 +1080,14 @@ switch ($act){
         <?php
         break;
     default:
+        $task_from      = $_GET['task_from'];
+        $task_status    = $_GET['task_status'];
+        $css_plus       = array('app-assets/css/chosen.css');
+        $js_plus        = array(
+            'app-assets/js/chosen.jquery.js',
+            'app-assets/js/prism.js',
+            'app-assets/js/init.js'
+        );
         $admin_title = $lang['tasks_manager'];
         require_once 'header.php';
         ?>
@@ -854,74 +1099,178 @@ switch ($act){
                         <ul class="list-group">
                             <li class="list-group-item"><span class="float-left"><i class="la la-star-o mr-1"></i></span><a href="<?php echo _URL_ADMIN.'/tasks.php';?>" <?php echo !$type ? 'style="color: red; font-weight: bold"' : '';?>> Việc của bạn</a></li>
                             <li class="list-group-item"><span class="float-left"><i class="la la-envelope-o mr-1"></i></span><a href="<?php echo _URL_ADMIN.'/tasks.php?type=send';?>" <?php echo $type == 'send' ? 'style="color: red; font-weight: bold"' : '';?>> Việc Đã Gửi</a></li>
+                            <li class="list-group-item"><span class="float-left"><i class="la la-check-circle-o mr-1"></i></span><a href="<?php echo _URL_ADMIN.'/tasks.php?type=report';?>" <?php echo $type == 'report' ? 'style="color: red; font-weight: bold"' : '';?>> Báo cáo của bạn</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
             <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <?php
-                    $para = array('post_status','post_category','post_user');
-                    foreach ($para AS $paras){
-                        if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
-                            $parameters[$paras] = $_REQUEST[$paras];
+                <form action="" method="get">
+                    <div class="row">
+                        <?php if(!$type){?>
+                        <div class="col-4 text-left">
+                            <select name="task_from" data-placeholder="Chọn người gửi" class="chosen-select-width form-control">
+                                <option value=""></option>
+                                <?php
+                                $users_list = getGlobalAll(_TABLE_USERS, '', array('order_by_row' => 'users_name', 'order_by_value' => 'ASC'));
+                                foreach ($users_list AS $users){
+                                    echo '<option value="'. $users['users_id'] .'" '. (($task_from == $users['users_id']) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <?php }?>
+                        <?php if($type == 'send'){echo '<input type="hidden" name="type" value="send">';}?>
+                        <?php if(!in_array($type, array('report'))){?>
+                        <div class="col-4 text-left">
+                            <select name="task_status" class="form-control round">
+                                <option value="" <?php echo empty($task_status) ? 'selected="selected"' : '';?>>Chọn trạng thái</option>
+                                <option value="2" <?php echo $task_status == 2 ? 'selected="selected"' : '';?>>Đã hoàn thành</option>
+                                <option value="1" <?php echo $task_status == 1 ? 'selected="selected"' : '';?>>Đã nhận việc</option>
+                                <option value="3" <?php echo $task_status == 3 ? 'selected="selected"' : '';?>>Chưa nhận việc</option>
+                            </select>
+                        </div>
+                        <div class="col-4 text-right">
+                            <input type="submit" value="Lọc kết quả" class="btn btn-outline-cyan round">
+                        </div>
+                        <?php }?>
+                    </div>
+                    <br />
+                </form>
+                <div class="card">
+                    <div class="card-body">
+                        <?php
+                        $para = array('task_from','task_status');
+                        foreach ($para AS $paras){
+                            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
+                                $parameters[$paras] = $_REQUEST[$paras];
+                                if($parameters['task_status'] == 3){
+                                    $parameters['task_status'] = 0;
+                                }
+                            }
                         }
-                    }
-                    $parameters['task_from'] = $user_id;
-                    if($parameters){
+                        if($type == 'send'){
+                            $parameters['task_from'] = $user_id;
+                        }
+                        if($parameters){
+                            foreach ($parameters as $key => $value) {
+                                $colums[]  = _TABLE_TASKS.'.'.$key .' = "'. checkInsert($value) .'"';
+                            }
+                            $parameters_list   = ' '.implode(' AND ', $colums);
+                        }
+
+                        // Tạo Url Parameter động
                         foreach ($parameters as $key => $value) {
-                            $colums[] = '`'.$key .'` = "'. checkInsert($value) .'"';
+                            $para_url[] = $key .'='. $value;
                         }
-                        $parameters_list = ' WHERE '.implode(' AND ', $colums);
-                    }
+                        $para_list                      = implode('&', $para_url);
+                        // Tạo Url Parameter động
 
-                    // Tạo Url Parameter động
-                    foreach ($parameters as $key => $value) {
-                        $para_url[] = $key .'='. $value;
-                    }
-                    $para_list                      = implode('&', $para_url);
-                    // Tạo Url Parameter động
+                        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
+                        $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_TASKS, $parameters)/$config_pagenavi['page_row']);
+                        $config_pagenavi['url']         = _URL_ADMIN.'/tasks.php?'.$para_list.'&';
+                        $page_start                     = ($page-1) * $config_pagenavi['page_row'];
 
-                    $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
-                    $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_TASKS, $parameters)/$config_pagenavi['page_row']);
-                    $config_pagenavi['url']         = _URL_ADMIN.'/tasks.php?'.$para_list.'&';
-                    $page_start                     = ($page-1) * $config_pagenavi['page_row'];
-
-                    if($type == 'send'){
-                        $data   = getGlobalAll(_TABLE_TASKS, $parameters,array(
-                            'order_by_row'  => 'id',
-                            'order_by_value'=> 'DESC',
-                            'limit_start'   => $page_start,
-                            'limit_number'  => $config_pagenavi['page_row']
-                        ));
-                    }else{
-                        $data   = getGlobalAll(_TABLE_TASKS, array(), array('query' => 'SELECT DISTINCT(`group_id`) FROM `'._TABLE_GROUP.'` WHERE `group_value` = "'. $user_id .'" ORDER BY `id` DESC'));
-                    }
-
-                    echo '<div class="table-responsive">';
-                    echo '<table class="table">';
-                    echo '<tbody>';
-                    if(!$data){
-                        echo '<tr><td width="100%" class="text-center">Chưa có công việc nào.</td></tr>';
-                    }
-                    foreach ($data AS $datas){
-                        if(!$type){
-                            $datas = getGlobal(_TABLE_TASKS, array('id' => $datas['group_id']));
+                        if($type == 'send'){
+                            $data   = getGlobalAll(_TABLE_TASKS, $parameters,array(
+                                'order_by_row'  => 'id',
+                                'order_by_value'=> 'DESC',
+                                'limit_start'   => $page_start,
+                                'limit_number'  => $config_pagenavi['page_row']
+                            ));
+                        }if($type == 'report'){
+                            $data   = getGlobalAll(_TABLE_TASKS,
+                            array(
+                                'task_type'     => 'report',
+                                'task_from'     => $user_id
+                            ),array(
+                                'order_by_row'  => 'id',
+                                'order_by_value'=> 'DESC',
+                                'limit_start'   => $page_start,
+                                'limit_number'  => $config_pagenavi['page_row']
+                            ));
+                        }else{
+                            $query = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
+                                      FROM dong_group
+                                      INNER JOIN dong_task 
+                                      ON dong_group.group_id = dong_task.id 
+                                      WHERE dong_group.group_type = "tasks" 
+                                      AND dong_group.group_value = '. $user_id .' '. ($parameters_list ? ' AND '.$parameters_list : '') .' 
+                                      ORDER BY dong_task.id DESC';
+                            $data   = getGlobalAll(_TABLE_TASKS, array(), array('query' => $query));
                         }
-                        echo '<tr>';
-                            echo '<td width="25%"><a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $datas['task_from'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $datas['task_from']), array('onecolum' => 'users_name')) .'</a></td>';
-                            echo '<td width="60%"><a href="'. _URL_ADMIN .'/tasks.php?act=detail&id='. $datas['id'] .'">'. ($datas['task_status'] == 0 ? '<strong>'. $datas['task_name'] .'</strong>' : $datas['task_name']) .'</a></td>';
-                            echo '<td width="15%">'. getViewTime($datas['task_time']) .'</td>';
-                        echo '</tr>';
-                    }
-                    echo '</tbody>';
-                    echo '</table>';
-                    echo '</div>';
-                    echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';
-                    ?>
+                        echo '<div class="table-responsive">';
+                        echo '<table class="table">';
+                        if($type == 'send'){
+                            echo '<thead>';
+                                echo '<th>Tiêu đề</th>';
+                                echo '<th>Người nhận</th>';
+                                echo '<th>Trạng thái</th>';
+                                echo '<th>Thời gian</th>';
+                            echo '</thead>';
+                        }else if($type == 'report'){
+                            echo '<thead>';
+                            echo '<th width="80%">Tiêu đề</th>';
+                            echo '<th width="20%">Thời gian</th>';
+                            echo '</thead>';
+                        }
+                        echo '<tbody>';
+                        if(!$data){
+                            echo '<tr><td colspan="4" width="100%" class="text-center">Chưa có công việc nào.</td></tr>';
+                        }
+                        foreach ($data AS $datas){
+                            switch ($datas['task_status']){
+                                case 0:
+                                    $color_text = 'text-danger';
+                                    break;
+                                case 1:
+                                    $color_text = 'teal';
+                                    break;
+                                case 2:
+                                    $color_text = 'purple';
+                                    break;
+                            }
+                            if($type == 'send'){
+                                $users_receive_data = array('group_id' => $datas['id'], 'group_type' => 'tasks');
+                                if(checkGlobal(_TABLE_GROUP, $users_receive_data) <= 3){
+                                    foreach (getGlobalAll(_TABLE_GROUP, $users_receive_data) AS $users_list){
+                                        $users_receives[] = '<a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $users_list['group_value'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $users_list['group_value']), array('onecolum' => 'users_name')) .'</a>';
+                                    }
+                                    $users_receive = implode($users_receives, ', ');
+                                }else{
+                                    foreach (getGlobalAll(_TABLE_GROUP, $users_receive_data, array('limit_number' => 3, 'order_by_row' => 'id', 'order_by_value' => 'DESC')) AS $users_list){
+                                        $users_receives[] = '<a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $users_list['group_value'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $users_list['group_value']), array('onecolum' => 'users_name')) .'</a>';
+                                    }
+                                    $users_receive = implode($users_receives, ', ').' và '.(checkGlobal(_TABLE_GROUP, $users_receive_data) - 3).' người nữa';
+                                }
+                                echo '<tr>';
+                                    echo '<td width="50%"><a href="'. _URL_ADMIN .'/tasks.php?act=detail&id='. $datas['id'] .'">'. ($datas['task_status'] == 0 ? '<strong class="'. $color_text .'">'. $datas['task_name'] .'</strong>' : '<font class="'. $color_text .'">'.$datas['task_name']) .'</a></a></td>';
+                                    echo '<td width="20%">'. $users_receive .'</td>';
+                                    echo '<td width="20%">'. $lang['tasks_status_'.$datas['task_status']]  .'</td>';
+                                    echo '<td width="10%">'. getViewTime($datas['task_time']) .'</td>';
+                                echo '</tr>';
+                            }else if($type == 'report'){
+                                echo '<tr>';
+                                    echo '<td width="80%"><a href="'. _URL_ADMIN .'/tasks.php?act=detail&id='. $datas['id'] .'">'. ($datas['task_status'] == 0 ? '<strong class="'. $color_text .'">'. $datas['task_name'] .'</strong>' : '<font class="'. $color_text .'">'.$datas['task_name']) .'</a></a></td>';
+                                    echo '<td width="20%">'. getViewTime($datas['task_time']) .'</td>';
+                                echo '</tr>';
+                            }
+                            else{
+                                echo '<tr>';
+                                    echo '<td width="20%"><a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $datas['task_from'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $datas['task_from']), array('onecolum' => 'users_name')) .'</a></td>';
+                                    echo '<td width="50%"><a href="'. _URL_ADMIN .'/tasks.php?act=detail&id='. $datas['id'] .'">'. ($datas['task_status'] == 0 ? '<strong class="'. $color_text .'">'. $datas['task_name'] .'</strong>' : '<font class="'. $color_text .'">'.$datas['task_name']) .'</a></a></td>';
+                                    echo '<td width="20%">'. $lang['tasks_status_'.$datas['task_status']]  .'</td>';
+                                    echo '<td width="10%">'. getViewTime($datas['task_time']) .'</td>';
+                                echo '</tr>';
+                            }
+                        }
+                        echo '</tbody>';
+                        echo '</table>';
+                        echo '</div>';
+                        echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';
+                        ?>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
         <?php

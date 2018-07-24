@@ -17,7 +17,7 @@
 <!-- BEGIN PAGE VENDOR JS-->
 <?php
 foreach ($js_plus AS $js){
-    echo '<script src="'. $js .'" type="text/javascript"></script>';
+    echo '<script src="'. $js .'" type="text/javascript"></script>'."\n";
 }
 ?>
 <!-- BEGIN MODERN JS-->

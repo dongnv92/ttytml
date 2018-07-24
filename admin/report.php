@@ -176,125 +176,282 @@ switch ($act){
         break;
     default:
         if($submit){
-            $tasks_users    = isset($_POST['tasks_users'])  ? trim($_POST['tasks_users'])   : '';
-            $tasks_start    = isset($_POST['tasks_start'])  ? trim($_POST['tasks_start'])   : '';
-            $tasks_end      = isset($_POST['tasks_end'])    ? trim($_POST['tasks_end'])     : '';
-            $tasks_role     = isset($_POST['tasks_role'])   ? trim($_POST['tasks_role'])    : '';
+            // Lấy danh sách các thành viên
+            $time_start 	    = isset($_POST['time_start'])           ? $_POST['time_start']          : '';
+            $time_end 	        = isset($_POST['time_end'])             ? $_POST['time_end']            : '';
+            $report_users 	    = isset($_POST['report_users'])         ? $_POST['report_users']        : '';
+            $report_users_group = isset($_POST['report_users_group'])   ? $_POST['report_users_group']  : '';
+            $report_users_role 	= isset($_POST['report_users_role'])    ? $_POST['report_users_role']   : '';
+            $report_users_room 	= isset($_POST['report_users_room'])    ? $_POST['report_users_room']   : '';
+            $users_lists        = array();
+            // Thành viên được chọn
+            $users_lists         = $report_users;
 
-            if($tasks_users > 0){
-                $query          = 'SELECT * FROM `dong_task` WHERE `task_to` = "'. $tasks_users .'" AND `task_status` = "2" AND (`task_end` BETWEEN "'. $tasks_start .'" AND "'. $tasks_end .'")';
-            }else{
-                $task_user = getGlobalAll('dong_users', array('users_level' => $tasks_role));
-                foreach ($task_user as $data_users) {
-                    $colums[] = "`task_to` = '" . checkInsert($data_users['users_id']) . "'";
+            // Nhóm thành viên
+            foreach($report_users_group AS $list_group){
+                $for_group = getGlobalAll(_TABLE_GROUP, array('group_type' => 'users_group', 'group_id' => $list_group));
+                foreach($for_group AS $for_group_list){
+                    $users_lists[] = $for_group_list['group_value'];
                 }
-                $colums_list = implode(' OR ', $colums);
-                $query          = 'SELECT * FROM `dong_task` WHERE ('. $colums_list .') AND `task_status` = "2" AND (`task_end` BETWEEN "'. $tasks_start .'" AND "'. $tasks_end .'")';
+            }
+            // Chức vụ
+            foreach($report_users_role AS $list_role){
+                foreach(getGlobalAll(_TABLE_USERS, array('users_level' => $list_role)) AS $for_role_list){
+                    $users_lists[] = $for_role_list['users_id'];
+                }
             }
 
-            $data_tasks     = getGlobalAll('dong_task', array(), array('query' => $query));
-            $tasks_users_dt = getGlobal('dong_users', array('users_id' => $tasks_users));
+            // Phòng Ban
+            foreach($report_users_room AS $list_room){
+                foreach(getGlobalAll(_TABLE_USERS, array('users_room' => $list_room)) AS $for_room_list){
+                    $users_lists[] = $for_room_list['users_id'];
+                }
+            }
+            $users_lists = array_unique($users_lists);
+
+            $error = array();
+            if(!$time_start){
+                $error['time_start']    = getViewError('Cần nhập thời gian');
+            }else{
+                $time_start         = DateTime::createFromFormat('d/m/Y', $time_start);
+                $time_start         = ($time_start->getTimestamp()) - 86400;
+            }
+            if(!$time_end){
+                $error['time_end']      = getViewError('Cần nhập thời gian');
+            }else{
+                $time_end           = DateTime::createFromFormat('d/m/Y', $time_end);
+                $time_end           = $time_end->getTimestamp();
+            }
+
+            if(!checkRole('report')){
+                $users_lists = array($user_id);
+            }
         }
 
-        $admin_title = $lang['report_title'];
+        $css_plus       = array(
+            'app-assets/vendors/css/extensions/datedropper.min.css',
+            'app-assets/vendors/css/extensions/timedropper.min.css',
+            'app-assets/vendors/css/forms/icheck/icheck.css',
+            'app-assets/css/plugins/forms/checkboxes-radios.css',
+            'app-assets/css/chosen.css');
+        $js_plus        = array(
+            'app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js',
+            'app-assets/vendors/js/extensions/datedropper.min.js',
+            'app-assets/vendors/js/extensions/timedropper.min.js',
+            'app-assets/js/chosen.jquery.js',
+            'app-assets/js/prism.js',
+            'app-assets/js/init.js');
+
+        $admin_title = 'Xem báo cáo';
         require_once 'header.php';
-
         ?>
-        <div class="row">
-            <form action="" method="post">
-                <!--Select one person-->
-                <div class="col-md-2">
-                    <select class="selectpicker" name="tasks_users" data-style="select-with-transition" data-size="7">
-                        <?php
-                        if(checkGlobal('dong_users', array('users_id' => $tasks_users)) > 0){
-                            echo '<option value="'. $tasks_users .'">'. (getGlobalAll('dong_users', array('users_id' => $tasks_users), array('onecolum' => 'users_name'))) .'</option>';
-                        }else{
-                            echo '<option> Chọn thành viên</option>';
-                        }
-                        foreach (getGlobalAll('dong_users', array()) AS $data_user){
-                            echo '<option value="'. $data_user['users_id'] .'">'. $data_user['users_name'] .'</option>';
-                        }
-                        ?>
-                    </select>
-                </div>
-                <!--Select Room-->
-                <div class="col-md-2">
-                    <select class="selectpicker" name="tasks_role" data-style="select-with-transition" data-size="7">
-                        <?php
-                        if(checkGlobal('dong_category', array('id' => $tasks_role, 'category_type' => 'role')) > 0){
-                            echo '<option value="'. $tasks_role .'">'. (getGlobalAll('dong_category', array('id' => $tasks_role), array('onecolum' => 'category_name'))) .'</option>';
-                        }else{
-                            echo '<option> Chọn khoa, phòng</option>';
-                        }
-                        foreach (getGlobalAll('dong_category', array(), array('query' => 'SELECT * FROM `dong_category` WHERE `category_type` = "role" AND `category_sub` > 0')) AS $data_role){
-                            echo '<option value="'. $data_role['id'] .'">'. $data_role['category_name'] .'</option>';
-                        }
-                        ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="text" name="tasks_start" class="form-control datepicker" value="<?php echo $tasks_start;?>" placeholder="Chọn ngày bắt đầu" />
-                </div>
-                <div class="col-md-2">
-                    <input type="text" name="tasks_end" class="form-control datepicker" value="<?php echo $tasks_end;?>" placeholder="Chọn ngày kết thúc" />
-                </div>
-                <div class="col-md-2">
-                    <input type="submit" name="submit" value="Xem kết quả" class="btn btn-success btn-google">
-                </div>
 
-            </form>
-        </div>
-    <div class="row">
-        <div class="card">
-            <div class="card-header"><h4 class="card-title"><?php echo $lang['report_detail'];?> của <strong><?php echo $tasks_users_dt['users_name'];?></strong> từ ngày <?php echo '<strong>'.$tasks_start.'</strong>  đến ngày <strong>'.$tasks_end.'</strong>';?></h4> </div>
-            <div class="card-content">
-            <?php
-                $table_header   = array(
-                    $lang['label_tasks'],
-                    $lang['tasks_users_send'],
-                    $lang['tasks_users_receive'],
-                    $lang['tasks_date_finish'],
-                    $lang['tasks_time_finish'],
-                    $lang['tasks_progess'],
-                    $lang['tasks_from_star'],
-                    $lang['tasks_to_star'],
-                    $lang['post_status']
-                );
-                $table_data     = array();
-                foreach ($data_tasks AS $tasks){
-                    $tasks_users_send   = getGlobal('dong_users', array('users_id' => $tasks['task_from']));
-                    $tasks_users_receive= getGlobal('dong_users', array('users_id' => $tasks['task_to']));
-                    $day = (strtotime($tasks['task_end']) - strtotime(date('Y-m-d', $tasks['task_time_rep']))) / (60 * 60 * 24);
-                    if($day < 0){
-                        $text_day = $lang['tasks_progess_1'];
-                        $text_day = str_replace('{day}', ($day * -1), $text_day);
-                    }else if($day == 0){
-                        $text_day = $lang['tasks_progess_2'];
-                    }else if($day > 0){
-                        $text_day = $lang['tasks_progess_3'];
-                        $text_day = str_replace('{day}', $day, $text_day);
-                    }
-                    array_push($table_data, array(
-                        '<a href="'. _URL_ADMIN.'/tasks.php?act=detail&id='.$tasks['id'].'">'.$tasks['task_name'].'</a>',
-                        '<a href="'. _URL_ADMIN.'/users.php?type=update&id='.  $tasks_users_send['users_id'] .'">'. $tasks_users_send['users_name'] .'</a>',
-                        '<a href="'. _URL_ADMIN.'/users.php?type=update&id='.  $tasks_users_receive['users_id'] .'">'. $tasks_users_receive['users_name'] .'</a>',
-                        $tasks['task_end'],
-                        getViewTime($tasks['task_time_rep']),
-                        $text_day,
-                        $lang['tasks_star_'.$tasks['task_from_star']],
-                        $lang['tasks_star_'.$tasks['task_to_star']],
-                        $lang['tasks_status_'.$tasks['task_status']]
-                    ));
-                }
-                if(mysqli_num_rows(mysqli_query($db_connect, $query)) == 0){
-                    echo '<div class="text-center">Chưa có thông tin</div>';
-                }else{
-                    echo getDataTable($table_header, $table_data);
-                }
-            ?>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header"><h4 class="card-title">Xuất báo cáo công việc</h4></div>
+                    <div class="card-body">
+                        <form action="" method="post">
+                            <!-- Date -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4 class="card-title">Từ ngày <small>(Ngày/Tháng/Năm)</small></h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <input value="<?php echo $time_start ? date('d/m/Y', $time_start) : '';?>" type="text" name="time_start" class="form-control input-lg" id="animate" placeholder="Date Dropper">
+                                            <?php if($error['time_start']){ echo $error['time_start']; }?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h4 class="card-title">Đến ngày <small>(Ngày/Tháng/Năm)</small></h4>
+                                        </div>
+                                        <div class="card-body">
+                                            <input type="text" name="time_end" class="form-control input-lg" id="animate_1" value="<?php echo $time_end ? date('d/m/Y', $time_end) : '';?>" placeholder="Date Dropper">
+                                            <?php if($error['time_end']){ echo $error['time_end']; }?>
+                                            <script language="JavaScript">
+                                                $(document).ready(function(){
+                                                    $('#animate').dateDropper({
+                                                        dropWidth: 200,
+                                                        lang: 'vi',
+                                                        format: 'd/m/Y'
+                                                    });
+                                                    $('#animate_1').dateDropper({
+                                                        dropWidth: 200,
+                                                        lang: 'vi',
+                                                        format: 'd/m/Y'
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Date -->
+                            <div class="row">
+                                <!-- Danh sách thành viên -->
+                                <?php if(checkRole('report')){?>
+                                <div class="col-md-6">
+                                    <fieldset class="form-group">
+                                        <select name="report_users[]" data-placeholder="Nhập tên" multiple class="chosen-select-width round form-control">
+                                            <option value=""></option>
+                                            <?php
+                                            $users_list = getGlobalAll(_TABLE_USERS, '', array('order_by_row' => 'users_name', 'order_by_value' => 'ASC'));
+                                            foreach ($users_list AS $users){
+                                                echo '<option value="'. $users['users_id'] .'" '. ((in_array($users['users_id'], $report_users)) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                    </fieldset>
+                                </div>
+                                <!-- Danh sách phòng ban -->
+                                <div class="col-md-6">
+                                    <fieldset class="form-group">
+                                        <select name="report_users_role[]" data-placeholder="Nhập các chức vụ" multiple class="chosen-select-width form-control">
+                                            <option value=""></option>
+                                            <?php
+                                            $role_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'role'));
+                                            foreach ($role_list AS $role_group){
+                                                echo '<option value="'. $role_group['id'] .'" '. ((in_array($role_group['id'], $report_users_role)) ? 'selected' : '') .'>'. $role_group['category_name'] .'</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                    </fieldset>
+                                </div>
+                                <!-- Danh sách chức vụ -->
+                                <div class="col-md-6">
+                                    <select name="report_users_room[]" data-placeholder="Nhập các phòng ban" multiple class="chosen-select-width form-control">
+                                        <option value=""></option>
+                                        <?php
+                                        $room_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'room'));
+                                        foreach ($room_list AS $room_group){
+                                            echo '<option value="'. $room_group['id'] .'" '. ((in_array($room_group['id'], $report_users_room)) ? 'selected' : '') .'>'. $room_group['category_name'] .'</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <!-- Danh sách nhóm -->
+                                <div class="col-md-6">
+                                    <fieldset class="form-group">
+                                        <select name="report_users_group[]" data-placeholder="Nhập Group" multiple class="chosen-select-width form-control">
+                                            <option value=""></option>
+                                            <?php
+                                            $group_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'users_group'));
+                                            foreach ($group_list AS $users_group){
+                                                echo '<option value="'. $users_group['id'] .'" '. ((in_array($users_group['id'], $report_users_group)) ? 'selected' : '') .'>'. $users_group['category_name'] .'</option>';
+                                            }
+                                            ?>
+                                        </select>
+                                    </fieldset>
+                                </div>
+                                <?php }?> <!-- End check Role -->
+                                <div class="col-md-6 text-left">
+                                    <script language="JavaScript">
+                                        var tableToExcel = (function() {
+                                            var uri = 'data:application/vnd.ms-excel;base64,'
+                                                , template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>'
+                                                , base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) }
+                                                , format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) }
+                                            return function(table, name) {
+                                                if (!table.nodeType) table = document.getElementById(table)
+                                                var ctx = {worksheet: name || 'Worksheet', table: table.innerHTML}
+                                                window.location.href = uri + base64(format(template, ctx))
+                                            }
+                                        })()
+                                    </script>
+                                    <input type="button" class="btn btn-outline-cyan round" onclick="tableToExcel('testTable', 'W3C Example Table')" value="Export to Excel">
+                                </div>
+                                <div class="col-md-6 text-right">
+                                    <input type="submit" name="submit" class="btn btn-outline-cyan round" value="Xem kết quả">
+                                </div>
+                            </div>
+                        </form>
+                        <hr>
+                        <?php
+                        echo '<div class="table-responsive">';
+                        echo '<table class="table table-bordered mb-0" id="testTable">';
+                        echo '<thread>';
+                        echo '<tr>';
+                        echo '<th align="center" rowspan="2" valign="middle">Họ Tên</th>';
+                        echo '<th align="center" rowspan="2" valign="middle">Đơn Vị</th>';
+                        echo '<th align="center" rowspan="2" valign="middle">Số việc được giao</th>';
+                        echo '<th class="text-center" colspan="3"> Kết quả tự đánh giá</th>';
+                        echo '<th class="text-center" colspan="3">Kết quả cấp trên đánh giá</th>';
+                        echo '<th align="center" rowspan="2" valign="middle">Từ ngày</th>';
+                        echo '<th align="center" rowspan="2" valign="middle">Đến ngày</th>';
+                        echo '</tr>';
+                        echo '<tr>';
+                        echo '<th align="center">Tốt n(%)</th>';
+                        echo '<th align="center">Hoàn thành n(%)</th>';
+                        echo '<th align="center">Không hoàn thành n(%)</th>';
+                        echo '<th align="center">Tốt n(%)</th>';
+                        echo '<th align="center">Hoàn thành n(%)</th>';
+                        echo '<th align="center">Không hoàn thành n(%)</th>';
+                        echo '</tr>';
+                        echo '</thread>';
+                        echo '<tbody>';
+                        foreach ($users_lists AS $datas){
+                            $data                   = array();
+                            $data['send_start_1']   = 0;
+                            $data['send_start_2']   = 0;
+                            $data['send_start_3']   = 0;
+                            $data['to_start_1']     = 0;
+                            $data['to_start_2']     = 0;
+                            $data['to_start_3']     = 0;
+                            $query = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* FROM dong_group INNER JOIN dong_task ON dong_group.group_id = dong_task.id WHERE dong_group.group_type = "tasks" AND dong_group.group_value = '. $datas .' AND dong_task.task_status = 2 AND (dong_task.task_time BETWEEN '. $time_start .' AND '. $time_end .')';
+                            foreach (getGlobalAll(_TABLE_GROUP, '', array('query' => $query)) AS $task_data){
+                                switch ($task_data['task_from_star']){
+                                    case 1:
+                                        $data['send_start_1'] += 1;
+                                        break;
+                                    case 2:
+                                        $data['send_start_2'] += 1;
+                                        break;
+                                    case 3:
+                                        $data['send_start_3'] += 1;
+                                        break;
+                                }
+                                switch ($task_data['task_to_star']){
+                                    case 1:
+                                        $data['to_start_1'] += 1;
+                                        break;
+                                    case 2:
+                                        $data['to_start_2'] += 1;
+                                        break;
+                                    case 3:
+                                        $data['to_start_3'] += 1;
+                                        break;
+                                }
+                            }
+                            $data['users_name'] = getGlobal(_TABLE_USERS, array('users_id' => $datas));
+                            $data['room']       = getGlobalAll(_TABLE_CATEGORY, array('id' => $data['users_name']['users_room']), array('onecolum' => 'category_name'));
+                            $data['work']       = mysqli_num_rows(mysqli_query($db_connect, $query));
+                            echo '<tr>';
+                            echo '<td>'. $data['users_name']['users_name'] .'</td>';
+                            echo '<td>'. $data['room'] .'</td>';
+                            echo '<td>'. $data['work'] .'</td>';
+                            echo '<td>'. $data['to_start_3'] .' ('. round((($data['to_start_3'] / $data['work'])*100)) .'%)</td>';
+                            echo '<td>'. $data['to_start_2'] .' ('. round((($data['to_start_2'] / $data['work'])*100)) .'%)</td>';
+                            echo '<td>'. $data['to_start_1'] .' ('. round((($data['to_start_1'] / $data['work'])*100)) .'%)</td>';
+                            echo '<td>'. $data['send_start_3'] .' ('. round((($data['send_start_3'] / $data['work'])*100)) .'%)</td>';
+                            echo '<td>'. $data['send_start_2'] .' ('. round((($data['send_start_2'] / $data['work'])*100)) .'%)</td>';
+                            echo '<td>'. $data['send_start_1'] .' ('. round((($data['send_start_1'] / $data['work'])*100)) .'%)</td>';
+                            echo '<td>'. date('d/m/Y', $time_start) .'</td>';
+                            echo '<td>'. date('d/m/Y', $time_end) .'</td>';
+                            echo '</tr>';
+                        }
+                        echo '</tbody>';
+                        echo '</table>';
+                        echo '</div>';
+                        ?>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
         <?php
         break;
 }
