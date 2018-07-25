@@ -1149,14 +1149,19 @@ switch ($act){
                                 }
                             }
                         }
+                        $parameters_list = '';
                         if($type == 'send'){
                             $parameters['task_from'] = $user_id;
                         }
                         if($parameters){
                             foreach ($parameters as $key => $value) {
-                                $colums[]  = _TABLE_TASKS.'.'.$key .' = "'. checkInsert($value) .'"';
+                                if($type == 'send'){
+                                    $colums[]  = '`'.$key .'` = "'. checkInsert($value) .'"';
+                                }else{
+                                    $colums[]  = _TABLE_TASKS.'.'.$key .' = "'. checkInsert($value) .'"';
+                                }
                             }
-                            $parameters_list   = ' '.implode(' AND ', $colums);
+                            $parameters_list   = ' WHERE '.implode(' AND ', $colums);
                         }
 
                         // Tạo Url Parameter động
@@ -1167,28 +1172,15 @@ switch ($act){
                         // Tạo Url Parameter động
 
                         $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
-                        $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_TASKS, $parameters)/$config_pagenavi['page_row']);
                         $config_pagenavi['url']         = _URL_ADMIN.'/tasks.php?'.$para_list.'&';
                         $page_start                     = ($page-1) * $config_pagenavi['page_row'];
 
                         if($type == 'send'){
-                            $data   = getGlobalAll(_TABLE_TASKS, $parameters,array(
-                                'order_by_row'  => 'id',
-                                'order_by_value'=> 'DESC',
-                                'limit_start'   => $page_start,
-                                'limit_number'  => $config_pagenavi['page_row']
-                            ));
-                        }if($type == 'report'){
-                            $data   = getGlobalAll(_TABLE_TASKS,
-                            array(
-                                'task_type'     => 'report',
-                                'task_from'     => $user_id
-                            ),array(
-                                'order_by_row'  => 'id',
-                                'order_by_value'=> 'DESC',
-                                'limit_start'   => $page_start,
-                                'limit_number'  => $config_pagenavi['page_row']
-                            ));
+                            $query = 'SELECT * FROM `'. _TABLE_TASKS .'` '.$parameters_list.' ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
+                            $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` '.$parameters_list))/$config_pagenavi['page_row']);
+                        }else if($type == 'report'){
+                            $query = 'SELECT * FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"  ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
+                            $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"'))/$config_pagenavi['page_row']);
                         }else{
                             $query = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
                                       FROM dong_group
@@ -1196,9 +1188,18 @@ switch ($act){
                                       ON dong_group.group_id = dong_task.id 
                                       WHERE dong_group.group_type = "tasks" 
                                       AND dong_group.group_value = '. $user_id .' '. ($parameters_list ? ' AND '.$parameters_list : '') .' 
+                                      ORDER BY dong_task.id DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
+                            $query_1 = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
+                                      FROM dong_group
+                                      INNER JOIN dong_task 
+                                      ON dong_group.group_id = dong_task.id 
+                                      WHERE dong_group.group_type = "tasks" 
+                                      AND dong_group.group_value = '. $user_id .' '. ($parameters_list ? ' AND '.$parameters_list : '') .' 
                                       ORDER BY dong_task.id DESC';
-                            $data   = getGlobalAll(_TABLE_TASKS, array(), array('query' => $query));
+                            $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, $query_1))/$config_pagenavi['page_row']);
                         }
+                        $data   = getGlobalAll(_TABLE_TASKS, array(), array('query' => $query));
+
                         echo '<div class="table-responsive">';
                         echo '<table class="table">';
                         if($type == 'send'){
@@ -1212,6 +1213,13 @@ switch ($act){
                             echo '<thead>';
                             echo '<th width="80%">Tiêu đề</th>';
                             echo '<th width="20%">Thời gian</th>';
+                            echo '</thead>';
+                        }else{
+                            echo '<thead>';
+                            echo '<th>Người gửi</th>';
+                            echo '<th>Tiêu đề</th>';
+                            echo '<th>Trạng thái</th>';
+                            echo '<th>Thời gian</th>';
                             echo '</thead>';
                         }
                         echo '<tbody>';
@@ -1232,6 +1240,7 @@ switch ($act){
                             }
                             if($type == 'send'){
                                 $users_receive_data = array('group_id' => $datas['id'], 'group_type' => 'tasks');
+                                $users_receives = '';
                                 if(checkGlobal(_TABLE_GROUP, $users_receive_data) <= 3){
                                     foreach (getGlobalAll(_TABLE_GROUP, $users_receive_data) AS $users_list){
                                         $users_receives[] = '<a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $users_list['group_value'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $users_list['group_value']), array('onecolum' => 'users_name')) .'</a>';
