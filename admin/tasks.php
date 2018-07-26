@@ -1082,6 +1082,47 @@ switch ($act){
     default:
         $task_from      = $_GET['task_from'];
         $task_status    = $_GET['task_status'];
+        $task_from_star = $_GET['task_from_star'];
+
+        $para = array('task_from','task_status','task_from_star');
+        foreach ($para AS $paras){
+            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
+                $parameters[$paras] = $_REQUEST[$paras];
+                if($parameters['task_status'] == 3){
+                    $parameters['task_status'] = 0;
+                }
+                if($parameters['task_from_star'] == 'donot'){
+                    $parameters['task_from_star'] = 0;
+                }
+            }
+        }
+        $parameters_list = '';
+        if($type == 'send'){
+            $parameters['task_from'] = $user_id;
+        }
+        if($parameters){
+            foreach ($parameters as $key => $value) {
+                if(!$type){
+                    $colums[]  = _TABLE_TASKS.'.'.$key .' = "'. checkInsert($value) .'"';
+                    $parameters_list   = ' '.implode(' AND ', $colums).' ';
+                }else{
+                    $colums[]  = '`'.$key .'` = "'. checkInsert($value) .'"';
+                    $parameters_list   = ' WHERE '.implode(' AND ', $colums).' ';
+                }
+            }
+        }
+
+        // Tạo Url Parameter động
+        foreach ($parameters as $key => $value) {
+            $para_url[] = $key .'='. $value;
+        }
+        $para_list                      = implode('&', $para_url);
+        // Tạo Url Parameter động
+
+        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
+        $config_pagenavi['url']         = _URL_ADMIN.'/tasks.php'.( $type ? '?type='.$type : '').( $parameters ? ($type ? '&'.$para_list : '?'.$para_list) : '' ).( (!$type && !$parameters) ? '?' : '&' );
+        $page_start                     = ($page-1) * $config_pagenavi['page_row'];
+
         $css_plus       = array('app-assets/css/chosen.css');
         $js_plus        = array(
             'app-assets/js/chosen.jquery.js',
@@ -1107,99 +1148,85 @@ switch ($act){
             <div class="col-md-9">
                 <form action="" method="get">
                     <div class="row">
-                        <?php if(!$type){?>
-                        <div class="col-4 text-left">
-                            <select name="task_from" data-placeholder="Chọn người gửi" class="chosen-select-width form-control">
-                                <option value=""></option>
+                        <?php
+                        switch ($type){
+                            case 'send':
+                                $query = 'SELECT * FROM `'. _TABLE_TASKS .'` '.$parameters_list.' ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
+                                $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` '.$parameters_list))/$config_pagenavi['page_row']);
+                                $data_send_star     = array('task_from' => $user_id, 'task_status' => 2, 'task_from_star' => 0);
+                                $number_send_star   = checkGlobal(_TABLE_TASKS, $data_send_star);
+                                ?>
+                                <div class="col text-left">
+                                    <select name="task_status" class="form-control round">
+                                        <option value="" <?php echo empty($task_status) ? 'selected="selected"' : '';?>>Chọn trạng thái</option>
+                                        <option value="2" <?php echo $task_status == 2 ? 'selected="selected"' : '';?>>Đã hoàn thành</option>
+                                        <option value="1" <?php echo $task_status == 1 ? 'selected="selected"' : '';?>>Đã nhận việc</option>
+                                        <option value="3" <?php echo $task_status == 3 ? 'selected="selected"' : '';?>>Chưa nhận việc</option>
+                                    </select>
+                                    <input type="hidden" name="type" value="send">
+                                </div>
                                 <?php
-                                $users_list = getGlobalAll(_TABLE_USERS, '', array('order_by_row' => 'users_name', 'order_by_value' => 'ASC'));
-                                foreach ($users_list AS $users){
-                                    echo '<option value="'. $users['users_id'] .'" '. (($task_from == $users['users_id']) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
+                                if($number_send_star > 0){
+                                ?>
+                                <div class="col text-left"><a class="btn btn-outline-cyan round" href="tasks.php?type=send&task_status=2&task_from_star=donot"><?php echo $number_send_star;?> việc chưa đánh giá</a> </div>
+                                <?php
                                 }
                                 ?>
-                            </select>
-                        </div>
-                        <?php }?>
-                        <?php if($type == 'send'){echo '<input type="hidden" name="type" value="send">';}?>
-                        <?php if(!in_array($type, array('report'))){?>
-                        <div class="col-4 text-left">
-                            <select name="task_status" class="form-control round">
-                                <option value="" <?php echo empty($task_status) ? 'selected="selected"' : '';?>>Chọn trạng thái</option>
-                                <option value="2" <?php echo $task_status == 2 ? 'selected="selected"' : '';?>>Đã hoàn thành</option>
-                                <option value="1" <?php echo $task_status == 1 ? 'selected="selected"' : '';?>>Đã nhận việc</option>
-                                <option value="3" <?php echo $task_status == 3 ? 'selected="selected"' : '';?>>Chưa nhận việc</option>
-                            </select>
-                        </div>
-                        <div class="col-4 text-right">
-                            <input type="submit" value="Lọc kết quả" class="btn btn-outline-cyan round">
-                        </div>
-                        <?php }?>
-                    </div>
-                    <br />
-                </form>
-                <div class="card">
-                    <div class="card-body">
-                        <?php
-                        $para = array('task_from','task_status');
-                        foreach ($para AS $paras){
-                            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
-                                $parameters[$paras] = $_REQUEST[$paras];
-                                if($parameters['task_status'] == 3){
-                                    $parameters['task_status'] = 0;
-                                }
-                            }
-                        }
-                        $parameters_list = '';
-                        if($type == 'send'){
-                            $parameters['task_from'] = $user_id;
-                        }
-                        if($parameters){
-                            foreach ($parameters as $key => $value) {
-                                if($type == 'send'){
-                                    $colums[]  = '`'.$key .'` = "'. checkInsert($value) .'"';
-                                }else{
-                                    $colums[]  = _TABLE_TASKS.'.'.$key .' = "'. checkInsert($value) .'"';
-                                }
-                            }
-                            $parameters_list   = ' WHERE '.implode(' AND ', $colums);
-                        }
-
-                        // Tạo Url Parameter động
-                        foreach ($parameters as $key => $value) {
-                            $para_url[] = $key .'='. $value;
-                        }
-                        $para_list                      = implode('&', $para_url);
-                        // Tạo Url Parameter động
-
-                        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
-                        $config_pagenavi['url']         = _URL_ADMIN.'/tasks.php?'.$para_list.'&';
-                        $page_start                     = ($page-1) * $config_pagenavi['page_row'];
-
-                        if($type == 'send'){
-                            $query = 'SELECT * FROM `'. _TABLE_TASKS .'` '.$parameters_list.' ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
-                            $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` '.$parameters_list))/$config_pagenavi['page_row']);
-                        }else if($type == 'report'){
-                            $query = 'SELECT * FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"  ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
-                            $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"'))/$config_pagenavi['page_row']);
-                        }else{
-                            $query = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
+                                <div class="col text-right"><input type="submit" value="Lọc kết quả" class="btn btn-outline-cyan round"></div>
+                                <?php
+                                break;
+                            case 'report':
+                                $query = 'SELECT * FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"  ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
+                                $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"'))/$config_pagenavi['page_row']);
+                                echo '<input type="hidden" name="type" value="report">';
+                                break;
+                            default:
+                                $query = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
                                       FROM dong_group
                                       INNER JOIN dong_task 
                                       ON dong_group.group_id = dong_task.id 
                                       WHERE dong_group.group_type = "tasks" 
                                       AND dong_group.group_value = '. $user_id .' '. ($parameters_list ? ' AND '.$parameters_list : '') .' 
                                       ORDER BY dong_task.id DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
-                            $query_1 = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
+                                $query_1 = 'SELECT dong_group.group_id, dong_group.group_value, dong_task.* 
                                       FROM dong_group
                                       INNER JOIN dong_task 
                                       ON dong_group.group_id = dong_task.id 
                                       WHERE dong_group.group_type = "tasks" 
                                       AND dong_group.group_value = '. $user_id .' '. ($parameters_list ? ' AND '.$parameters_list : '') .' 
                                       ORDER BY dong_task.id DESC';
-                            $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, $query_1))/$config_pagenavi['page_row']);
+                                $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, $query_1))/$config_pagenavi['page_row']);
+                                ?>
+                                <div class="col text-left">
+                                    <select name="task_from" data-placeholder="Chọn người gửi" class="chosen-select-width form-control">
+                                        <option value=""></option>
+                                        <?php
+                                        $users_list = getGlobalAll(_TABLE_USERS, '', array('order_by_row' => 'users_name', 'order_by_value' => 'ASC'));
+                                        foreach ($users_list AS $users){
+                                            echo '<option value="'. $users['users_id'] .'" '. (($task_from == $users['users_id']) ? 'selected' : '') .'>'. $users['users_name'] .'</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+                                <div class="col text-left">
+                                    <select name="task_status" class="form-control round">
+                                        <option value="" <?php echo empty($task_status) ? 'selected="selected"' : '';?>>Chọn trạng thái</option>
+                                        <option value="2" <?php echo $task_status == 2 ? 'selected="selected"' : '';?>>Đã hoàn thành</option>
+                                        <option value="1" <?php echo $task_status == 1 ? 'selected="selected"' : '';?>>Đã nhận việc</option>
+                                        <option value="3" <?php echo $task_status == 3 ? 'selected="selected"' : '';?>>Chưa nhận việc</option>
+                                    </select>
+                                </div>
+                                <div class="col text-right"><input type="submit" value="Lọc kết quả" class="btn btn-outline-cyan round"></div>
+                                <?php
+                                break;
                         }
-                        $data   = getGlobalAll(_TABLE_TASKS, array(), array('query' => $query));
-
+                        ?>
+                    </div>
+                    <br />
+                </form>
+                <div class="card">
+                    <div class="card-body">
+                        <?php
                         echo '<div class="table-responsive">';
                         echo '<table class="table">';
                         if($type == 'send'){
@@ -1223,6 +1250,7 @@ switch ($act){
                             echo '</thead>';
                         }
                         echo '<tbody>';
+                        $data   = getGlobalAll(_TABLE_TASKS, array(), array('query' => $query));
                         if(!$data){
                             echo '<tr><td colspan="4" width="100%" class="text-center">Chưa có công việc nào.</td></tr>';
                         }

@@ -454,8 +454,7 @@ switch ($act){
                     'users_level'   => $users_level,
                     'users_manager' => $users_manager,
                     'users_room'    => $users_room,
-                    'users_status'  => $users_status,
-                    'users_time'    => _CONFIG_TIME
+                    'users_status'  => $users_status
                 );
                 updateGlobal('dong_users', $data, array('users_id' => $id));
                 $users = getGlobal(_TABLE_USERS, array('users_id' => $id));
@@ -715,7 +714,7 @@ switch ($act){
                                         </select>
                                     </fieldset>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3 text-right">
                                     <input type="submit" class="btn btn-outline-blue round" value="Lọc dữ liệu">
                                 </div>
                             </div>
@@ -745,7 +744,7 @@ switch ($act){
                         }
                         $para_list                      = implode('&', $para_url);
                         // Tạo Url Parameter động
-                        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
+                        $config_pagenavi['page_row']    = 40;
                         $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_USERS, $parameters)/$config_pagenavi['page_row']);
                         $config_pagenavi['url']         = _URL_ADMIN.'/users.php?'.$para_list.'&';
                         $page_start                     = ($page-1) * $config_pagenavi['page_row'];
@@ -756,8 +755,33 @@ switch ($act){
                             'limit_start'   => $page_start,
                             'limit_number'  => $config_pagenavi['page_row']
                         ));
+
+                        echo '<div id="simple-user-cards-with-border" class="row mt-2">';
+                        foreach ($data AS $datas){
+                        ?>
+                            <div class="col-xl-3 col-md-6 col-12">
+                                <div class="card border-blue border-lighten-2">
+                                    <div class="text-center">
+                                        <div class="card-body"><a href="<?php echo 'users.php?act=detail&id='. $datas['users_id'];?>"><img src="images/avatar.png" class="rounded-circle  height-150" alt="<?php echo $datas['users_name']?>"></a></div>
+                                        <div class="card-body">
+                                            <h4 class="card-title"><?php echo '<a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $datas['users_id']  .'">'. $datas['users_name'] .'</a>';?></h4>
+                                            <h6 class="card-subtitle text-muted">
+                                                <?php echo '<a href="'. _URL_ADMIN .'/category.php?act=update&id='. $datas['users_room'] .'&type='. getGlobalAll(_TABLE_CATEGORY, array('id' => $datas['users_room']), array('onecolum' => 'category_type')) .'">'. getGlobalAll(_TABLE_CATEGORY, array('id' => $datas['users_room']), array('onecolum' => 'category_name')) .'</a>';?><br>
+                                                <?php echo '<a href="'. _URL_ADMIN .'/category.php?act=update&id='. $datas['users_level'] .'&type='. getGlobalAll(_TABLE_CATEGORY, array('id' => $datas['users_level']), array('onecolum' => 'category_type')) .'">'. getGlobalAll(_TABLE_CATEGORY, array('id' => $datas['users_level']), array('onecolum' => 'category_name')) .'</a>';?>
+                                            </h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <a class="btn btn-outline-danger round" href="users.php?act=del&id=<?php echo $datas['users_id'];?>"><i class="la la-remove"></i> Xóa</a>
+                                            <a class="btn btn-outline-cyan round" href="users.php?act=update&id=<?php echo $datas['users_id'];?>"><i class="la la-check"></i> Sửa</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php
+                        }
+                        echo '</div>';
                         //echo $data; exit();
-                        echo '<div class="table-responsive">';
+                        /*echo '<div class="table-responsive">';
                         echo '<table class="table">';
                         echo '<thread>';
                         echo '<tr>';
@@ -774,7 +798,7 @@ switch ($act){
                         foreach ($data AS $datas){
                             echo '<tr>';
                             echo '<td><a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $datas['users_id']  .'">'. $datas['users_name'] .'</a><br />';
-                            echo '<a class="green" href=" '._URL_ADMIN.'/users.php?act=update&id='. $datas['users_id'] .'">Sửa</a> | ';
+                            echo '<a class="green" href=" '._URL_ADMIN.'/users.php?act=update&id='. $data's[users_id'] .'">Sửa</a> | ';
                             echo '<a class="danger" href=" '._URL_ADMIN.'/users.php?act=del&id='.$datas['users_id'] .'">Xóa</a>';
                             echo '</td>';
                             echo '<td>'. $datas['users_email'] .'</td>';
@@ -787,7 +811,7 @@ switch ($act){
                         }
                         echo '</tbody>';
                         echo '</table>';
-                        echo '</div>';
+                        echo '</div>';*/
                         echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';
                         ?>
                     </div>
