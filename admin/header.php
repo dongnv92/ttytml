@@ -26,9 +26,8 @@ require_once '../includes/core.php';
     <!-- BEGIN VENDOR CSS-->
     <link rel="stylesheet" type="text/css" href="app-assets/css/vendors.css">
     <link rel="stylesheet" type="text/css" href="app-assets/css/plugins/forms/wizard.css">
-
     <script src="app-assets/vendors/js/vendors.min.js" type="text/javascript"></script>
-    <!--<script src="http://code.jquery.com/jquery-latest.min.js"></script>-->
+    <?php echo $active_menu == 'upload' ? '<script src="http://code.jquery.com/jquery-latest.min.js"></script>' : '';?>
     <script src="../includes/js/jquery.filer.min.js"></script>
     <!-- END VENDOR CSS-->
     <!-- BEGIN MODERN CSS-->
@@ -79,7 +78,7 @@ require_once '../includes/core.php';
                     <li class="dropdown dropdown-user nav-item">
                         <a class="dropdown-toggle nav-link dropdown-user-link" href="#" data-toggle="dropdown">
                             <span class="mr-1">Hi,<span class="user-name text-bold-700"><?php echo $data_user['users_name'];?></span></span>
-                            <span class="avatar avatar-online"><img src="images/avatar.png" alt="avatar"><i></i></span>
+                            <span class="avatar avatar-online"><img src="<?php echo $data_user['users_avatar'] ? _URL_HOME.'/'.$data_user['users_avatar'] : 'images/avatar.png' ?>" alt="avatar"><i></i></span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="<?php echo _URL_ADMIN.'/users.php?act=detail&id='.$data_user['users_id'];?>"><i class="ft-user"></i> Xem trang cá nhân</a>
@@ -192,19 +191,13 @@ require_once '../includes/core.php';
                 </ul>
             </li>
             <?php }?>
-            <li class=" nav-item">
-                <a href="#"><i class="la la-image"></i><span class="menu-title" data-i18n="nav.page_layouts.main">Bộ sưu tập</span></a>
-                <ul class="menu-content">
-                    <li <?php echo ($active_menu == 'upload' && !$act ? 'class="active"' : ''); ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/upload.php">Danh sách tập tin</a></li>
-                    <li <?php echo ($active_menu == 'upload' && in_array($act, array('upload')) ? 'class="active"' : ''); ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/upload.php?act=upload">Upload File</a></li>
-                </ul>
-            </li>
-            <li class=" nav-item">
+            <li class="nav-item">
                 <a href="#"><i class="la la-angellist"></i><span class="menu-title" data-i18n="nav.page_layouts.main"><?php echo $lang['label_report'];?></span></a>
                 <ul class="menu-content">
                     <li <?php echo ($active_menu == 'report' && !$act ? 'class="active"' : ''); ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/report.php">Xem báo cáo</a></li>
                 </ul>
             </li>
+            <li class="nav-item"><a href="<?php echo _URL_ADMIN;?>/upload.php"><i class="la la-image"></i><span class="menu-title">Thêm tập tin</span></a></li>
             <li class=" nav-item"><a href="<?php echo _URL_HOME;?>"><i class="la la-home"></i><span class="menu-title">Trang Chủ</span></a></li>
             <li class=" nav-item"><a href="<?php echo _URL_LOGOUT;?>"><i class="la la-long-arrow-left"></i><span class="menu-title">Đăng xuất</span></a></li>
         </ul>

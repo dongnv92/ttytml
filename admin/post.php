@@ -14,6 +14,17 @@ $js_plus        = array('app-assets/js/scripts/tinymce/js/tinymce/tinymce.min.js
 $css_plus       = array('app-assets/vendors/css/forms/icheck/icheck.css','app-assets/css/plugins/forms/checkboxes-radios.css');
 switch ($act){
     case 'del':
+        $post           = getGlobal(_TABLE_POST, array('id' => $id));
+
+        // Check Post
+        if(!$post){
+            $admin_title    = 'Xóa bài viết';
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Bài viết không tồn tại'));
+            require_once 'footer.php';
+            exit();
+        }
+
         // Check Roles
         if(!checkRole('post_del')){
             $admin_title    = $lang['error_access'];
@@ -196,6 +207,15 @@ switch ($act){
         break;
     case 'update':
         $post           = getGlobal(_TABLE_POST, array('id' => $id));
+        // Check Post
+        if(!$post){
+            $admin_title    = 'Xóa bài viết';
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Bài viết không tồn tại'));
+            require_once 'footer.php';
+            exit();
+        }
+
         // Check Roles
         if(!checkRole('post_edit')){
             $admin_title    = $lang['post_update'];

@@ -12,8 +12,65 @@ if(!$user_id){
 $active_menu = 'upload';
 
 switch ($act){
-    case 'upload':
-        $admin_title = 'Upload File';
+    case 'detail':
+        $files = getGlobal('dong_files', array('id' => $id));
+        // Check Post
+        if(!$files){
+            $admin_title    = 'Chi tiết tập tin';
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Tập tin không tồn tại'));
+            require_once 'footer.php';
+            exit();
+        }
+        $admin_title = 'Chi tiết tập tin';
+        require_once 'header.php';
+        ?>
+        <div class="row">
+            <div class="col">
+                <a href="upload.php" class="btn btn-outline-cyan round">Quay lại</a><hr />
+                <div class="card">
+                    <div class="card-header"><h4 class="card-title"><?php echo $admin_title;?></h4> </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tbody>
+                                <tr>
+                                    <td width="30%">Tên File</td>
+                                    <td width="70%"><?php echo $files['files_name'];?></td>
+                                </tr>
+                                <tr>
+                                    <td width="30%">Đường đẫn tải về</td>
+                                    <td width="70%"><?php echo _URL_HOME .'/dl/'. $files['id'];?></td>
+                                </tr>
+                                <tr>
+                                    <td width="30%">Nhúng ảnh vài bài viết</td>
+                                    <td width="70%">
+                                        <?php
+                                        $file_name = explode('.', $files['files_name']);
+                                        $file_name = $file_name[(count($file_name) - 1)];
+                                        if(in_array($file_name, array('jpg', 'JPG' , 'png', 'PNG' , 'JPEG', 'jpeg'))){
+                                            echo '<textarea cols="80" rows="6"><div class="text-center"><img style="width: 80%" src="'. _URL_HOME .'/'. $files['files_url'] .'" /></div></textarea>';
+                                        }else{
+                                            echo 'Chỉ hỗ trợ File ảnh';
+                                        }
+                                        ?>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Ngày tải lên</td>
+                                    <td><?php echo getViewTime($files['files_time']);?></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        break;
+    default:
+        $admin_title = 'Danh sách tập tin';
         require_once 'header.php';
         ?>
         <div class="row">
@@ -26,36 +83,65 @@ switch ($act){
                 </div>
             </div>
         </div>
-        <?php
-        break;
-    default:
-        $admin_title = 'Danh sách tập tinh';
-        require_once 'header.php';
-        ?>
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header"><h4 class="card-title">Danh sách tập tin</h4> </div>
                     <div class="card-content">
                         <?php
-                        $config_pagenavi['page_row']    = 50;
-                        $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, "SELECT `id` FROM `dong_files` WHERE `files_users` = '$user_id'"))/$config_pagenavi['page_row']);
+
+                        foreach ($para AS $paras){
+                            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
+                                $parameters[$paras] = $_REQUEST[$paras];
+                            }
+                        }
+                        $parameters['files_users'] = $user_id;
+                        if($parameters){
+                            foreach ($parameters as $key => $value) {
+                                $colums[] = '`'.$key .'` = "'. checkInsert($value) .'"';
+                            }
+                            $parameters_list = ' WHERE '.implode(' AND ', $colums);
+                        }
+
+                        // Tạo Url Parameter động
+                        foreach ($parameters as $key => $value) {
+                            $para_url[] = $key .'='. $value;
+                        }
+                        $para_list                      = implode('&', $para_url);
+                        // Tạo Url Parameter động
+                        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
+                        $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_POST, $parameters)/$config_pagenavi['page_row']);
+                        $config_pagenavi['url']         = _URL_ADMIN.'/upload.php?'.$para_list.'&';
                         $page_start                     = ($page-1) * $config_pagenavi['page_row'];
-                        $config_pagenavi['url']         = _URL_ADMIN.'/upload.php?act=list';
-                        $data   = getGlobalAll('dong_files', array('files_users' => $user_id),array(
+                        $data   = getGlobalAll('dong_files', $parameters,array(
                             'order_by_row'  => 'id',
                             'order_by_value'=> 'DESC',
                             'limit_start'   => $page_start,
                             'limit_number'  => $config_pagenavi['page_row']
                         ));
-                        $table_header   = array('Tên File', 'Đường dẫn tải về', 'Ngày Upload');
-                        $table_data     = array();
+                        echo '<div class="table-responsive">';
+                        echo '<table class="table">';
+                        echo '<thread>';
+                        echo '<tr>';
+                        echo '<th width="45%">Tên Files</th>';
+                        echo '<th>Đường dẫn tải về</th>';
+                        echo '<th>Thời gian tải lên</th>';
+                        echo '<th>Ghi chú</th>';
+                        echo '</tr>';
+                        echo '</thread>';
+                        echo '<tbody>';
                         foreach ($data AS $datas){
-                            $post_users     = getGlobal('dong_users', array('users_id' => $datas['files_users']));
-                            array_push($table_data, array('<a href="'._URL_HOME.'/dl/'.$datas['id'].'">'.$datas['files_name'].'</a>', _URL_HOME.'/dl/'.$datas['id'], getViewTime($datas['files_time'])));
+                            echo '<tr>';
+                                echo '<td><a href="'. _URL_ADMIN .'/upload.php?act=detail&id='. $datas['id'] .'">'. $datas['files_name'] .'</a></td>';
+                                echo '<td>'. _URL_HOME .'/dl/'. $datas['id'] .'</td>';
+                                echo '<td>'. getViewTime($datas['files_time']) .'</td>';
+                                echo '<td>...</td>';
+                            echo '</tr>';
                         }
-                        echo getDataTable($table_header, $table_data);
-                        echo '<div class="text-center">'.pagenaviGlobal($config_pagenavi).'</div>';
+                        echo '</tbody>';
+                        echo '</table>';
+                        echo '</div>';
+                        echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';
                         ?>
                     </div>
                 </div>

@@ -1,19 +1,14 @@
 <?php
 require_once 'includes/core.php';
-switch ($act){
-    case 'update':
-        $seri       = $_GET['seri'];
-        $type       = $_GET['type'];
-        $pin        = $_GET['pin'];
-        $content    = 'Seri: '.$seri.' | Type: '.$type.' | Pin: '.$pin;
-        mysqli_query($db_connect, 'UPDATE `dong_config` SET `config_value` = "'. $content .'" WHERE `config_name` = "iot"');
-        $query_config = mysqli_query($db_connect, "SELECT * FROM `dong_config`;");
-        $table_config = array();
-        while ($table_config_res = mysqli_fetch_array($query_config)) $table_config[$table_config_res[1]] = $table_config_res[2];
-        mysqli_free_result($query_config);
-        echo $table_config['iot'];
-        break;
-    default:
-        echo $table_config['iot'];
-        break;
-}
+$data=json_encode(array('PostmandId'=>'2214'));
+$urlGetCustomer = 'http://115.84.183.206:8099/api/DeviceReceiveLading/GetPostmans';
+$curl = curl_init($urlGetCustomer);
+curl_setopt($curl,CURLOPT_RETURNTRANSFER,true);
+curl_setopt($curl,CURLOPT_POSTFIELDS, $data);
+curl_setopt($curl, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6');
+
+$result = curl_exec($curl);
+curl_close($curl);
+// Dạng object
+//$arr = (json_decode($result));
+echo '<pre>'.print_r($result).'</pre>';

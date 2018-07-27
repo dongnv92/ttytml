@@ -30,9 +30,38 @@ switch ($act){
             }
 
             if(!$error){
+                // Upload File
+                require_once '../includes/lib/class.uploader.php';
+                $uploader = new Uploader();
+                $data_upload = $uploader->upload($_FILES['users_avatar'], array(
+                    'limit'         => 10, //Maximum Limit of files. {null, Number}
+                    'maxSize'       => 10, //Maximum Size of files {null, Number(in MB's)}
+                    'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
+                    'required'      => false, //Minimum one file is required for upload {Boolean}
+                    'uploadDir'     => '../images/users/', //Upload directory {String}
+                    'title'         => array('auto', 10), //New file name {null, String, Array} *please read documentation in README.md
+                    'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
+                    'replace'       => false, //Replace the file if it already exists  {Boolean}
+                    'perms'         => null, //Uploaded file permisions {null, Number}
+                    'onCheck'       => null, //A callback function name to be called by checking a file for errors (must return an array) | ($file) | Callback
+                    'onError'       => null, //A callback function name to be called if an error occured (must return an array) | ($errors, $file) | Callback
+                    'onSuccess'     => null, //A callback function name to be called if all files were successfully uploaded | ($files, $metas) | Callback
+                    'onUpload'      => null, //A callback function name to be called if all files were successfully uploaded (must return an array) | ($file) | Callback
+                    'onComplete'    => null, //A callback function name to be called when upload is complete | ($file) | Callback
+                    'onRemove'      => 'onFilesRemoveCallback' //A callback function name to be called by removing files (must return an array) | ($removed_files) | Callback
+                ));
+                if($data_upload['isComplete']){
+                    $files = $data_upload['data']['files'];
+                    foreach ($files AS $file){
+                        $file_name = explode('/', $file);
+                        $file_name = $file_name[(count($file_name) - 1)];
+                    }
+                }
+                // Upload File
                 $data = array(
                     'users_email'   => $users_email,
                     'users_phone'   => $users_phone,
+                    'users_avatar'  => $file_name ? 'images/users/'.$file_name : $users['users_avatar'],
                     'users_pass'    => ($users_pass && $users_repass) && ($users_pass == $users_repass) ? md5($users_pass) : $users['users_pass'],
                     'users_name'    => $users_name
                 );
@@ -43,7 +72,7 @@ switch ($act){
         $admin_title = $lang['users_update'];
         require_once 'header.php';
         ?>
-        <form action="" class="form form-horizontal" method="post">
+        <form action="" class="form form-horizontal" method="post" enctype="multipart/form-data">
             <div class="row horizontal-form-layouts">
                 <div class="col-md-8">
                     <div class="card"> <!--Content-->
@@ -60,6 +89,10 @@ switch ($act){
                             <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_email'], 'name' => 'users_email', 'value' => $users['users_email'], 'require' => TRUE, 'error' => $error['users_email'])); ?>
                             <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_phone'], 'name' => 'users_phone', 'value' => $users['users_phone'], 'error' => $error['users_phone'])); ?>
                             <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_name'], 'name' => 'users_name', 'value' => $users['users_name'], 'require' => TRUE, 'error' => $error['users_name'])); ?>
+                            <div class="form-group row">
+                                <label class="col-md-3 label-control">Ảnh đại diện</label>
+                                <div class="col-md-9"><fieldset class="form-group"><div class="col"><input type="file" class="form-control-file" name="users_avatar"></div></fieldset></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -137,7 +170,7 @@ switch ($act){
                         <div class="card-img-top img-fluid bg-cover height-300" style="background: url('../images/system/cover.jpg') 50%;"></div>
                         <div class="media profil-cover-details w-100">
                             <div class="media-left pl-2 pt-2">
-                                <a href="#" class="profile-image"><img src="../images/system/avatar.png" class="rounded-circle img-border height-100" alt="Card image"></a>
+                                <a href="#" class="profile-image"><img src="<?php echo $profile['users_avatar'] ? _URL_HOME.'/'.$profile['users_avatar'] : 'images/avatar.png' ?>" class="rounded-circle img-border height-100" alt="Card image"></a>
                             </div>
                             <div class="media-body pt-3 px-2">
                                 <div class="row">
@@ -445,12 +478,41 @@ switch ($act){
             }
 
             if(!$error){
+                // Upload File
+                require_once '../includes/lib/class.uploader.php';
+                $uploader = new Uploader();
+                $data_upload = $uploader->upload($_FILES['users_avatar'], array(
+                    'limit'         => 10, //Maximum Limit of files. {null, Number}
+                    'maxSize'       => 10, //Maximum Size of files {null, Number(in MB's)}
+                    'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
+                    'required'      => false, //Minimum one file is required for upload {Boolean}
+                    'uploadDir'     => '../images/users/', //Upload directory {String}
+                    'title'         => array('auto', 10), //New file name {null, String, Array} *please read documentation in README.md
+                    'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
+                    'replace'       => false, //Replace the file if it already exists  {Boolean}
+                    'perms'         => null, //Uploaded file permisions {null, Number}
+                    'onCheck'       => null, //A callback function name to be called by checking a file for errors (must return an array) | ($file) | Callback
+                    'onError'       => null, //A callback function name to be called if an error occured (must return an array) | ($errors, $file) | Callback
+                    'onSuccess'     => null, //A callback function name to be called if all files were successfully uploaded | ($files, $metas) | Callback
+                    'onUpload'      => null, //A callback function name to be called if all files were successfully uploaded (must return an array) | ($file) | Callback
+                    'onComplete'    => null, //A callback function name to be called when upload is complete | ($file) | Callback
+                    'onRemove'      => 'onFilesRemoveCallback' //A callback function name to be called by removing files (must return an array) | ($removed_files) | Callback
+                ));
+                if($data_upload['isComplete']){
+                    $files = $data_upload['data']['files'];
+                    foreach ($files AS $file){
+                        $file_name = explode('/', $file);
+                        $file_name = $file_name[(count($file_name) - 1)];
+                    }
+                }
+                // Upload File
                 $data = array(
                     'users_user'    => $users_name_login,
                     'users_email'   => $users_email,
                     'users_phone'   => $users_phone,
                     'users_pass'    => ($users_pass && $users_repass) && $users_pass == $users_repass ? md5($users_pass) : $users['users_pass'],
                     'users_name'    => $users_name,
+                    'users_avatar'  => $file_name ? 'images/users/'.$file_name : $users['users_avatar'],
                     'users_level'   => $users_level,
                     'users_manager' => $users_manager,
                     'users_room'    => $users_room,
@@ -465,13 +527,13 @@ switch ($act){
         $admin_title = $lang['users_update'];
         require_once 'header.php';
         ?>
-        <form action="" class="form form-horizontal" method="post">
+        <form action="" class="form form-horizontal" method="post" enctype="multipart/form-data">
         <div class="row horizontal-form-layouts">
             <div class="col-md-8">
                 <div class="card"> <!--Content-->
-                    <div class="card-header"><h4 class="card-title"><?php echo $lang['users_add'];?></h4></div>
+                    <div class="card-header"><h4 class="card-title">Cập nhập thông tin thành viên</h4></div>
                     <div class="card-body">
-                        <?php if($submit && !$error){echo getAlert('success', $lang['users_add_success']);} ?>
+                        <?php if($submit && !$error){echo getAlert('success', "Cập nhập thành viên thành công");} ?>
                             <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_name_login'], 'name' => 'users_name_login', 'value' => $users['users_user'], 'require' => TRUE, 'error' => $error['users_name_login'])); ?>
                             <?php echo inputFormPassword(array('label' => $lang['label_password'], 'name' => 'users_pass', 'value' => $users_pass, 'error' => $error['users_pass'])); ?>
                             <?php echo inputFormPassword(array('label' => $lang['users_repass'], 'name' => 'users_repass', 'value' => $users_repass)); ?>
@@ -504,6 +566,7 @@ switch ($act){
                                 <label class="col-md-3 label-control">Người quản lý</label>
                                 <div class="col-md-9">
                                     <select name="users_manager" class="form-control">
+                                        <option value="">Trống</option>
                                         <?php
                                         $data_users = getGlobalAll('dong_users', array());
                                         showCategories(array('data' => $data_users, 'type' => 'select', 'selected' => $users['users_manager'], 'form_value' => 'users_id', 'form_text' => 'users_name'))
@@ -511,6 +574,10 @@ switch ($act){
                                     </select>
                                 </div>
                             </div>
+                        <div class="form-group row">
+                            <label class="col-md-3 label-control">Ảnh đại diện</label>
+                            <div class="col-md-9"><fieldset class="form-group"><div class="col"><input type="file" class="form-control-file" name="users_avatar"></div></fieldset></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -585,14 +652,43 @@ switch ($act){
             }
 
             if(!$error){
+                // Upload File
+                require_once '../includes/lib/class.uploader.php';
+                $uploader = new Uploader();
+                $data_upload = $uploader->upload($_FILES['users_avatar'], array(
+                    'limit'         => 10, //Maximum Limit of files. {null, Number}
+                    'maxSize'       => 10, //Maximum Size of files {null, Number(in MB's)}
+                    'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
+                    'required'      => false, //Minimum one file is required for upload {Boolean}
+                    'uploadDir'     => '../images/users/', //Upload directory {String}
+                    'title'         => array('auto', 10), //New file name {null, String, Array} *please read documentation in README.md
+                    'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
+                    'replace'       => false, //Replace the file if it already exists  {Boolean}
+                    'perms'         => null, //Uploaded file permisions {null, Number}
+                    'onCheck'       => null, //A callback function name to be called by checking a file for errors (must return an array) | ($file) | Callback
+                    'onError'       => null, //A callback function name to be called if an error occured (must return an array) | ($errors, $file) | Callback
+                    'onSuccess'     => null, //A callback function name to be called if all files were successfully uploaded | ($files, $metas) | Callback
+                    'onUpload'      => null, //A callback function name to be called if all files were successfully uploaded (must return an array) | ($file) | Callback
+                    'onComplete'    => null, //A callback function name to be called when upload is complete | ($file) | Callback
+                    'onRemove'      => 'onFilesRemoveCallback' //A callback function name to be called by removing files (must return an array) | ($removed_files) | Callback
+                ));
+                if($data_upload['isComplete']){
+                    $files = $data_upload['data']['files'];
+                    foreach ($files AS $file){
+                        $file_name = explode('/', $file);
+                        $file_name = $file_name[(count($file_name) - 1)];
+                    }
+                }
+                // Upload File
                 $data = array(
                     'users_user'    => $users_name_login,
                     'users_email'   => $users_email,
                     'users_phone'   => $users_phone,
                     'users_pass'    => md5($users_pass),
                     'users_name'    => $users_name,
-                    'users_manager' => $users_manager,
+                    'users_manager' => $users_manager ? $user_manager : 0,
                     'users_room'    => $users_room,
+                    'users_avatar'  => $file_name ? 'images/users/'.$file_name : '',
                     'users_level'   => $users_level,
                     'users_status'  => 1,
                     'users_time'    => _CONFIG_TIME
@@ -613,7 +709,7 @@ switch ($act){
                     <div class="card-header"><h4 class="card-title"><?php echo $lang['users_add'];?></h4></div>
                     <div class="card-body">
                         <?php if($submit && !$error){echo getAlert('success', $lang['users_add_success']);} ?>
-                        <form action="" class="form form-horizontal" method="post">
+                        <form action="" class="form form-horizontal" method="post" enctype="multipart/form-data">
                             <?php echo inputFormText(array('type' => 'hozi', 'label' => $lang['users_name_login'], 'name' => 'users_name_login', 'value' => $users_name_login, 'require' => TRUE, 'error' => $error['users_name_login'])); ?>
                             <?php echo inputFormPassword(array('label' => $lang['label_password'], 'name' => 'users_pass', 'value' => $users_pass, 'error' => $error['users_pass'])); ?>
                             <?php echo inputFormPassword(array('label' => $lang['users_repass'], 'name' => 'users_repass', 'value' => $users_repass)); ?>
@@ -646,12 +742,17 @@ switch ($act){
                                 <label class="col-md-3 label-control">Người quản lý</label>
                                 <div class="col-md-9">
                                 <select name="users_manager" class="form-control" data-size="7">
+                                    <option value="">Trống</option>
                                     <?php
                                     $data_users = getGlobalAll('dong_users', array());
                                     showCategories(array('data' => $data_users, 'type' => 'select', 'form_value' => 'users_id', 'form_text' => 'users_name'))
                                     ?>
                                 </select>
                                 </div>
+                            </div>
+                            <div class="form-group row">
+                                <label class="col-md-3 label-control">Ảnh đại diện</label>
+                                <div class="col-md-9"><fieldset class="form-group"><div class="col"><input type="file" class="form-control-file" name="users_avatar"></div></fieldset></div>
                             </div>
                             <div class="form-actions text-center">
                                 <?php echo _BUTTON_BACK;?>
@@ -762,7 +863,7 @@ switch ($act){
                             <div class="col-xl-3 col-md-6 col-12">
                                 <div class="card border-blue border-lighten-2">
                                     <div class="text-center">
-                                        <div class="card-body"><a href="<?php echo 'users.php?act=detail&id='. $datas['users_id'];?>"><img src="images/avatar.png" class="rounded-circle  height-150" alt="<?php echo $datas['users_name']?>"></a></div>
+                                        <div class="card-body"><a href="<?php echo 'users.php?act=detail&id='. $datas['users_id'];?>"><img src="<?php echo $datas['users_avatar'] ? _URL_HOME.'/'.$datas['users_avatar'] : 'images/avatar.png' ?>" class="rounded-circle  height-150" alt="<?php echo $datas['users_name']?>"></a></div>
                                         <div class="card-body">
                                             <h4 class="card-title"><?php echo '<a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $datas['users_id']  .'">'. $datas['users_name'] .'</a>';?></h4>
                                             <h6 class="card-subtitle text-muted">

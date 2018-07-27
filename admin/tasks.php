@@ -146,7 +146,7 @@ switch ($act){
                     'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
                     'required'      => false, //Minimum one file is required for upload {Boolean}
                     'uploadDir'     => $path.'/', //Upload directory {String}
-                    'title'         => array('auto', 20), //New file name {null, String, Array} *please read documentation in README.md
+                    'title'         => null, //New file name {null, String, Array} *please read documentation in README.md
                     'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
                     'replace'       => false, //Replace the file if it already exists  {Boolean}
                     'perms'         => null, //Uploaded file permisions {null, Number}
@@ -449,7 +449,7 @@ switch ($act){
                         'extensions'    => null, //Whitelist for file extension. {null, Array(ex: array('jpg', 'png'))}
                         'required'      => false, //Minimum one file is required for upload {Boolean}
                         'uploadDir'     => $path.'/', //Upload directory {String}
-                        'title'         => array('auto', 20), //New file name {null, String, Array} *please read documentation in README.md
+                        'title'         => null, //New file name {null, String, Array} *please read documentation in README.md
                         'removeFiles'   => true, //Enable file exclusion {Boolean(extra for jQuery.filer), String($_POST field name containing json data with file names)}
                         'replace'       => false, //Replace the file if it already exists  {Boolean}
                         'perms'         => null, //Uploaded file permisions {null, Number}
