@@ -184,6 +184,10 @@ switch ($act){
             $report_users_role 	= isset($_POST['report_users_role'])    ? $_POST['report_users_role']   : '';
             $report_users_room 	= isset($_POST['report_users_room'])    ? $_POST['report_users_room']   : '';
             $users_lists        = array();
+
+            if(!checkRole('report') || checkGlobal(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $user_id)) == 0){
+                $report_users = array($user_id);
+            }
             // Thành viên được chọn
             $users_lists         = $report_users;
 
@@ -221,10 +225,6 @@ switch ($act){
             }else{
                 $time_end           = DateTime::createFromFormat('d/m/Y', $time_end);
                 $time_end           = $time_end->getTimestamp();
-            }
-
-            if(!checkRole('report')){
-                $users_lists = array($user_id);
             }
         }
 
@@ -348,7 +348,38 @@ switch ($act){
                                         </select>
                                     </fieldset>
                                 </div>
-                                <?php }?> <!-- End check Role -->
+                                <?php }else if(checkGlobal(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $user_id)) > 0){?>
+                                    <!-- Danh sách thành viên -->
+                                    <div class="col-md-6">
+                                        <fieldset class="form-group">
+                                            <select name="report_users[]" data-placeholder="Nhập tên" multiple class="chosen-select-width round form-control">
+                                                <option value=""></option>
+                                                <?php
+                                                // Phòng Ban
+                                                foreach(getGlobalAll(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $user_id)) AS $list_room){
+                                                    foreach(getGlobalAll(_TABLE_USERS, array('users_room' => $list_room['group_value'])) AS $for_room_list){
+                                                        echo '<option value="'. $for_room_list['users_id'] .'">'. $for_room_list['users_name'] .'</option>';
+                                                    }
+                                                }
+                                                ?>
+                                            </select>
+                                        </fieldset>
+                                    </div>
+                                    <!-- Danh sách phòng ban -->
+                                    <div class="col-md-6">
+                                        <fieldset class="form-group">
+                                            <select name="report_users_room[]" data-placeholder="Nhập các chức vụ" multiple class="chosen-select-width form-control">
+                                                <option value=""></option>
+                                                <?php
+                                                foreach (getGlobalAll(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $user_id)) AS $list_disp_users_manager_room){
+                                                    $cate = getGlobal(_TABLE_CATEGORY, array('id' => $list_disp_users_manager_room['group_value']));
+                                                    echo '<option value="'. $list_disp_users_manager_room['group_value'] .'">'. $cate['category_name'] .'</option>';
+                                                }
+                                                ?>
+                                            </select>
+                                        </fieldset>
+                                    </div>
+                                <?php }?>
                                 <div class="col-md-6 text-left">
                                     <script language="JavaScript">
                                         var tableToExcel = (function() {

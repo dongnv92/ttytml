@@ -5,6 +5,25 @@ if(!$user_id){
 }
 $active_menu = 'users';
 switch ($act){
+    case 'delete_users_manager_room':
+        $get_users  = $_GET['get_users'];
+        $group      = getGlobal(_TABLE_GROUP, array('id' => $id, 'group_type' => 'users_manager_room', 'group_id' => $get_users));
+            // Check GROUP
+        if(!$group){
+            $admin_title    = 'Xóa phòng ban';
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Phòng ban nay không có'));
+            break;
+        }
+        if(deleteGlobal(_TABLE_GROUP, array('id' => $id))){
+            header('location:'._URL_ADMIN.'/users.php?act=update&id='.$get_users);
+        }else{
+            $admin_title    = 'Xóa phòng ban';
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Phòng ban nay không có'));
+            break;
+        }
+        break;
     case 'change_info':
         $users = getGlobal(_TABLE_USERS, array('users_id' => $user_id));
         if($submit) {
@@ -452,7 +471,7 @@ switch ($act){
             $users_manager      = isset($_POST['users_manager'])    ? trim($_POST['users_manager'])     : '';
             $users_room         = isset($_POST['users_room'])       ? trim($_POST['users_room'])        : '';
             $users_status       = isset($_POST['users_status'])     ? trim($_POST['users_status'])      : 1;
-
+            $users_room_manager = isset($_POST['users_room_manager'])?$_POST['users_room_manager']      : null;
             // Check Error
             $error = array();
             if(!$users_name_login){
@@ -518,12 +537,39 @@ switch ($act){
                     'users_room'    => $users_room,
                     'users_status'  => $users_status
                 );
-                updateGlobal('dong_users', $data, array('users_id' => $id));
+                // Lệnh chỉnh sửa thành viên
+                if(!updateGlobal('dong_users', $data, array('users_id' => $id))){
+                    $admin_title    = 'Chỉnh sửa thành viên';
+                    require_once 'header.php';
+                    echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Lỗi khi sửa thành viên'));
+                    break;
+                }
+                // Thêm danh sách những phòng ban được thành viên này quản lý
+                foreach ($users_room_manager AS $list_room){
+                    if(checkGlobal(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $id, 'group_value' => $list_room)) == 0){
+                        $data_room = array(
+                            'group_type'    => 'users_manager_room',
+                            'group_id'      => $id,
+                            'group_value'   => $list_room,
+                            'group_users'   => $user_id,
+                            'group_time'    => _CONFIG_TIME
+                        );
+                        if(!insertGlobal(_TABLE_GROUP, $data_room)){
+                            $admin_title    = 'Chỉnh sửa thành viên';
+                            require_once 'header.php';
+                            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Lỗi khi thêm các phòng thành viên quản lý'));
+                            break;
+                        }
+                    }
+                }
                 $users = getGlobal(_TABLE_USERS, array('users_id' => $id));
             }
         }
-/*        $css_plus = array('app-assets/vendors/css/forms/icheck/icheck.css','app-assets/vendors/css/forms/icheck/custom.css');
-        $js_plus = array('app-assets/vendors/js/forms/icheck/icheck.min.js','app-assets/js/scripts/forms/checkbox-radio.js');*/
+        $css_plus       = array('app-assets/css/chosen.css');
+        $js_plus        = array(
+            'app-assets/js/chosen.jquery.js',
+            'app-assets/js/prism.js',
+            'app-assets/js/init.js');
         $admin_title = $lang['users_update'];
         require_once 'header.php';
         ?>
@@ -578,6 +624,22 @@ switch ($act){
                             <label class="col-md-3 label-control">Ảnh đại diện</label>
                             <div class="col-md-9"><fieldset class="form-group"><div class="col"><input type="file" class="form-control-file" name="users_avatar"></div></fieldset></div>
                         </div>
+                        <div class="form-group row">
+                            <label class="col-md-3 label-control">Thêm quản lý các phòng ban</label>
+                            <div class="col-md-9">
+                                <fieldset class="form-group">
+                                    <select name="users_room_manager[]" data-placeholder="Nhập các phòng ban" multiple class="chosen-select-width form-control">
+                                        <option value=""></option>
+                                        <?php
+                                        $role_list = getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'room'));
+                                        foreach ($role_list AS $role_group){
+                                            echo '<option value="'. $role_group['id'] .'" '. (checkGlobal(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $id, 'group_value' => $role_group['id'])) == 1 ? 'selected' : '') .'>'. $role_group['category_name'] .'</option>';
+                                        }
+                                        ?>
+                                    </select>
+                                </fieldset>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -596,6 +658,23 @@ switch ($act){
                         <div class="form-actions text-center">
                             <?php echo _BUTTON_BACK;?>
                             <input type="submit" name="submit" class="btn btn-outline-success round" value="<?php echo $admin_title;?>">
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h4 class="card-title">Quản lý các phòng ban</h4> </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tbody>
+                                <?php
+                                foreach (getGlobalAll(_TABLE_GROUP, array('group_type' => 'users_manager_room', 'group_id' => $id)) AS $list_disp_users_manager_room){
+                                    $cate = getGlobal(_TABLE_CATEGORY, array('id' => $list_disp_users_manager_room['group_value']));
+                                    echo '<tr><td>'. $cate['category_name'] .' ... <small class="text-danger"><i><a href="users.php?act=delete_users_manager_room&id='. $list_disp_users_manager_room['id'] .'&get_users='. $id .'">Xóa</a></i></small></td></tr>';
+                                }
+                                ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

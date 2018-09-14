@@ -1138,9 +1138,24 @@ switch ($act){
                     <div class="card-header"><h4 class="card-title"> Quản lý công việc </h4> </div>
                     <div class="card-content collapse show">
                         <ul class="list-group">
-                            <li class="list-group-item"><span class="float-left"><i class="la la-star-o mr-1"></i></span><a href="<?php echo _URL_ADMIN.'/tasks.php';?>" <?php echo !$type ? 'style="color: red; font-weight: bold"' : '';?>> Việc của bạn</a></li>
-                            <li class="list-group-item"><span class="float-left"><i class="la la-envelope-o mr-1"></i></span><a href="<?php echo _URL_ADMIN.'/tasks.php?type=send';?>" <?php echo $type == 'send' ? 'style="color: red; font-weight: bold"' : '';?>> Việc Đã Gửi</a></li>
-                            <li class="list-group-item"><span class="float-left"><i class="la la-check-circle-o mr-1"></i></span><a href="<?php echo _URL_ADMIN.'/tasks.php?type=report';?>" <?php echo $type == 'report' ? 'style="color: red; font-weight: bold"' : '';?>> Báo cáo của bạn</a></li>
+                            <li class="list-group-item">
+                                <span class="float-left">
+                                    <i class="la la-star-o mr-1"></i>
+                                </span>
+                                <a href="<?php echo _URL_ADMIN.'/tasks.php';?>" <?php echo !$type ? 'style="color: red; font-weight: bold"' : '';?>> Việc của bạn</a>
+                            </li>
+                            <li class="list-group-item">
+                                <span class="float-left">
+                                    <i class="la la-envelope-o mr-1"></i>
+                                </span>
+                                <a href="<?php echo _URL_ADMIN.'/tasks.php?type=send';?>" <?php echo $type == 'send' ? 'style="color: red; font-weight: bold"' : '';?>> Việc Đã Gửi</a>
+                            </li>
+                            <li class="list-group-item">
+                                <span class="float-left">
+                                    <i class="la la-check-circle-o mr-1"></i>
+                                </span>
+                                <a href="<?php echo _URL_ADMIN.'/tasks.php?type=report';?>" <?php echo $type == 'report' ? 'style="color: red; font-weight: bold"' : '';?>> Báo cáo của bạn</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -1151,10 +1166,16 @@ switch ($act){
                         <?php
                         switch ($type){
                             case 'send':
-                                $query = 'SELECT * FROM `'. _TABLE_TASKS .'` '.$parameters_list.' ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
+                                $query                          = 'SELECT * FROM `'. _TABLE_TASKS .'` '.$parameters_list.' ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
                                 $config_pagenavi['page_num']    = ceil(mysqli_num_rows(mysqli_query($db_connect, 'SELECT `id` FROM `'. _TABLE_TASKS .'` '.$parameters_list))/$config_pagenavi['page_row']);
-                                $data_send_star     = array('task_from' => $user_id, 'task_status' => 2, 'task_from_star' => 0);
-                                $number_send_star   = checkGlobal(_TABLE_TASKS, $data_send_star);
+                                $data_send_star                 = array('task_from' => $user_id, 'task_status' => 2, 'task_from_star' => 0);
+                                $number_send_star               = checkGlobal(_TABLE_TASKS, $data_send_star);
+                                $query_deadline                 = 'SELECT * FROM `'. _TABLE_TASKS .'` WHERE `task_from` = "'. $user_id .'" AND `task_end` < "'. date('Y-m-d', time()) .'" AND `task_status` != 2 ORDER BY `id` DESC LIMIT '. $page_start .','.$config_pagenavi['page_row'];
+                                $number_deadline                = mysqli_num_rows(mysqli_query($db_connect, $query_deadline));
+                                // Gán status = 4 thì query các việc bị trễ deadline
+                                if($task_status == 4){
+                                    $query = $query_deadline;
+                                }
                                 ?>
                                 <div class="col text-left">
                                     <select name="task_status" class="form-control round">
@@ -1167,13 +1188,12 @@ switch ($act){
                                 </div>
                                 <?php
                                 if($number_send_star > 0){
-                                ?>
-                                <div class="col text-left"><a class="btn btn-outline-cyan round" href="tasks.php?type=send&task_status=2&task_from_star=donot"><?php echo $number_send_star;?> việc chưa đánh giá</a> </div>
-                                <?php
+                                    echo '<div class="col text-left"><a class="btn btn-outline-cyan round" href="tasks.php?type=send&task_status=2&task_from_star=donot">'. $number_send_star .' việc chưa đánh giá</a> </div>';
                                 }
-                                ?>
-                                <div class="col text-right"><input type="submit" value="Lọc kết quả" class="btn btn-outline-cyan round"></div>
-                                <?php
+                                if($number_deadline > 0){
+                                    echo '<div class="col text-left"><a class="btn btn-outline-cyan round" href="tasks.php?type=send&task_status=4">'. $number_deadline .' việc trễ Deadline</a> </div>';
+                                }
+                                echo '<div class="col text-right"><input type="submit" value="Lọc kết quả" class="btn btn-outline-cyan round"></div>';
                                 break;
                             case 'report':
                                 $query = 'SELECT * FROM `'. _TABLE_TASKS .'` WHERE `task_type` = "report" AND `task_from` = "'. $user_id .'"  ORDER BY `id` DESC LIMIT '.$page_start.','.$config_pagenavi['page_row'];
@@ -1269,6 +1289,7 @@ switch ($act){
                             if($type == 'send'){
                                 $users_receive_data = array('group_id' => $datas['id'], 'group_type' => 'tasks');
                                 $users_receives = '';
+                                // Get danh sách người nhận
                                 if(checkGlobal(_TABLE_GROUP, $users_receive_data) <= 3){
                                     foreach (getGlobalAll(_TABLE_GROUP, $users_receive_data) AS $users_list){
                                         $users_receives[] = '<a href="'. _URL_ADMIN .'/users.php?act=detail&id='. $users_list['group_value'] .'">'. getGlobalAll(_TABLE_USERS, array('users_id' => $users_list['group_value']), array('onecolum' => 'users_name')) .'</a>';
@@ -1280,8 +1301,9 @@ switch ($act){
                                     }
                                     $users_receive = implode($users_receives, ', ').' và '.(checkGlobal(_TABLE_GROUP, $users_receive_data) - 3).' người nữa';
                                 }
+
                                 echo '<tr>';
-                                    echo '<td width="50%"><a href="'. _URL_ADMIN .'/tasks.php?act=detail&id='. $datas['id'] .'">'. ($datas['task_status'] == 0 ? '<strong class="'. $color_text .'">'. $datas['task_name'] .'</strong>' : '<font class="'. $color_text .'">'.$datas['task_name']) .'</a></a></td>';
+                                    echo '<td width="50%"><a href="'. _URL_ADMIN .'/tasks.php?act=detail&id='. $datas['id'] .'">'. ($datas['task_status'] == 0 ? '<strong class="'. $color_text .'">'. $datas['task_name'] .'</strong>' : '<font class="'. $color_text .'">'.$datas['task_name']) .'</a></td>';
                                     echo '<td width="20%">'. $users_receive .'</td>';
                                     echo '<td width="20%">'. $lang['tasks_status_'.$datas['task_status']]  .'</td>';
                                     echo '<td width="10%">'. getViewTime($datas['task_time']) .'</td>';

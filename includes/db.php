@@ -23,3 +23,4 @@ mysqli_free_result($query_config);
 
 // Define URL
 define('_URL_HOME', $table_config['url_home']);
+define('_IOT', $table_config['iot']);
