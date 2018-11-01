@@ -160,6 +160,12 @@ require_once '../includes/core.php';
                 </ul>
             </li>
             <li class=" nav-item">
+                <a href="#"><i class="ft-file-text"></i><span class="menu-title">Kế hoạch nội bộ</span></a>
+                <ul class="menu-content">
+                    <li <?php echo ($active_menu == 'local' && in_array($act, array('add'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/local.php?act=add">Thêm kế hoạch nội bộ</a></li>
+                </ul>
+            </li>
+            <li class=" nav-item">
                 <a href="#"><i class="la la-user-secret"></i><span class="menu-title" data-i18n="nav.page_layouts.main"><?php echo $lang['label_users'];?></span></a>
                 <ul class="menu-content">
                     <?php if(checkRole('users')){?>

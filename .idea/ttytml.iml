@@ -4,5 +4,9 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="html" />
+    <orderEntry type="module" module-name="citypost" />
+    <orderEntry type="module" module-name="social_video" />
+    <orderEntry type="module" module-name="fb" />
   </component>
 </module>
