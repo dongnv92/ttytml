@@ -7,6 +7,7 @@
  */
 
 require_once '../includes/core.php';
+header('Content-Type: text/html; charset=utf-8');
 $download   = getGlobal('dong_files', array('id' => $id));
 $file       = '../'.$download['files_url'];
 
@@ -21,5 +22,5 @@ if (file_exists($file)) {
     readfile($file);
     exit;
 }else{
-    echo'error';
+    echo'error: '.$file;
 }

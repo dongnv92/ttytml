@@ -162,7 +162,9 @@ require_once '../includes/core.php';
             <li class=" nav-item">
                 <a href="#"><i class="ft-file-text"></i><span class="menu-title">Kế hoạch nội bộ</span></a>
                 <ul class="menu-content">
+                    <li <?php echo ($active_menu == 'local' && in_array($act, array(''))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/local.php">Kế hoạch nội bộ của bạn</a></li>
                     <li <?php echo ($active_menu == 'local' && in_array($act, array('add'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="<?php echo _URL_ADMIN;?>/local.php?act=add">Thêm kế hoạch nội bộ</a></li>
+                    <li <?php echo ($active_menu == 'local' && in_array($act, array('detail'))) ? 'class="active"' : ''; ?>><a class="menu-item" href="javascript:;">Chi tiết kế hoạch nội bộ</a></li>
                 </ul>
             </li>
             <li class=" nav-item">

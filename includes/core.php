@@ -48,6 +48,7 @@ define('_TABLE_USERS', 'dong_users');
 define('_TABLE_GROUP', 'dong_group');
 define('_TABLE_TASKS', 'dong_task');
 define('_TABLE_NOTIFICATION', 'dong_notification');
+define('_TABLE_LOCAL', 'dong_local');
 
 define('_URL_ADMIN',_URL_HOME.'/admin');
 define('_URL_SEARCH',_URL_HOME.'/search');
