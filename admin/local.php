@@ -12,6 +12,88 @@ if(!$user_id){
 $active_menu = 'local';
 
 switch ($act){
+    case 'intro':
+        $admin_title = 'Tổng Quan Kế Hoạch Nội Bộ';
+        require_once 'header.php';
+        ?>
+        <div class="row">
+            <div class="col-xl-6 col-md-12">
+                <div class="card overflow-hidden">
+                    <div class="card-content">
+                        <div class="media align-items-stretch bg-gradient-x-info text-white rounded">
+                            <div class="p-2 media-middle">
+                                <i class="ft-layers font-large-2 text-white"></i>
+                            </div>
+                            <div class="media-body p-2">
+                                <a href="<?=_URL_ADMIN?>/local.php?type=users&id=<?=$data_user['users_id']?>"><h4 class="text-white">Kế Hoạch Nội Bộ Của Bạn</h4></a>
+                                <span>Kế hoạch cá nhân</span>
+                            </div>
+                            <div class="media-right p-2 media-middle">
+                                <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'users', 'local_users' => $data_user['users_id']));?></h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php
+            switch ($data_user['users_level']){
+                case in_array($data_user['users_level'], array(88,80,119,83,120,72,124)):
+                    $room = getGlobal(_TABLE_CATEGORY, array('id' => $data_user['users_room']));
+                    ?>
+                    <div class="col-xl-6 col-md-12">
+                        <div class="card">
+                            <div class="card-content">
+                                <div class="media align-items-stretch bg-gradient-x-warning text-white rounded">
+                                    <div class="p-2 media-middle">
+                                        <i class="ft-layers font-large-2 text-white"></i>
+                                    </div>
+                                    <div class="media-body p-2">
+                                        <a href="<?=_URL_ADMIN?>/local.php?type=room&id=<?=$room['id']?>">
+                                            <h4 class="text-white"><?php echo $room['category_name']?></h4>
+                                        </a>
+                                        <span>Kế hoạch nội bộ tập thể</span>
+                                    </div>
+                                    <div class="media-right p-2 media-middle">
+                                        <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'room', 'local_users' => $data_user['users_room']));?></h1>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php
+                break;
+            case in_array($data_user['users_level'], array(69, 70)):
+                foreach (getGlobalAll(_TABLE_CATEGORY, array('category_type' => 'room')) AS $category){
+                ?>
+                    <div class="col-xl-6 col-md-12">
+                        <div class="card">
+                            <div class="card-content">
+                                <div class="media align-items-stretch bg-gradient-x-warning text-white rounded">
+                                    <div class="p-2 media-middle">
+                                        <i class="ft-layers font-large-2 text-white"></i>
+                                    </div>
+                                    <div class="media-body p-2">
+                                        <a href="<?=_URL_ADMIN?>/local.php?type=room&id=<?=$category['id']?>">
+                                            <h4 class="text-white"><?php echo $category['category_name']?></h4>
+                                        </a>
+                                        <span>Kế hoạch nội bộ tập thể</span>
+                                    </div>
+                                    <div class="media-right p-2 media-middle">
+                                        <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'room', 'local_users' => $category['id']));?></h1>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php
+                }
+                break;
+            }
+            ?>
+        </div>
+        <?php
+        require_once 'footer.php';
+        break;
     case 'detail':
         $local = getGlobal(_TABLE_LOCAL, array('id' => $id));
         // Kiểm tra nếu kế hoạch không có thì thông báo lỗi
@@ -289,64 +371,103 @@ switch ($act){
         require_once 'footer.php';
         break;
     default:
-        $admin_title = 'Kế hoạch nội bộ của bạn';
+        if($type == 'users'){
+            $user   = getGlobal(_TABLE_USERS, array('users_id' => $id));
+            $admin_title = 'Kế Hoạch Nội Bộ Của '.$user['users_name'];
+        }else if($type == 'room'){
+            $room   = getGlobal(_TABLE_CATEGORY, array('id' => $id));
+            $admin_title = 'Kế Hoạch Nội Bộ Của '.$room['category_name'];
+        }
+        // Pagination
+        foreach ($para AS $paras){
+            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
+                $parameters[$paras] = $_REQUEST[$paras];
+            }
+        }
+        $parameters['local_type']     = $type;
+        $parameters['local_users']    = $id;
+        if($parameters){
+            foreach ($parameters as $key => $value) {
+                $colums[] = '`'.$key .'` = "'. checkInsert($value) .'"';
+            }
+            $parameters_list = ' WHERE '.implode(' AND ', $colums);
+        }
+
+        // Tạo Url Parameter động
+        foreach ($parameters as $key => $value) {
+            $para_url[] = $key .'='. $value;
+        }
+        $para_list                      = implode('&', $para_url);
+        // Tạo Url Parameter động
+        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
+        $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_LOCAL, $parameters)/$config_pagenavi['page_row']);
+        $config_pagenavi['url']         = _URL_ADMIN.'/local.php?'.$para_list.'&';
+        $page_start                     = ($page-1) * $config_pagenavi['page_row'];
+        $data   = getGlobalAll(_TABLE_LOCAL, $parameters,array(
+            'order_by_row'  => 'id',
+            'order_by_value'=> 'DESC',
+            'limit_start'   => $page_start,
+            'limit_number'  => $config_pagenavi['page_row']
+        ));
+        // Pagination
         require_once 'header.php';
         ?>
         <div class="row">
-            <div class="col-md-12">
+            <div id="recent-transactions" class="col-12">
                 <div class="card">
-                    <div class="card-header"><h4 class="card-title"><?php echo $lang['post_list'];?> <a href="<?php echo _URL_ADMIN.'/local.php?act=add'?>" class="btn round btn-outline-cyan">Thêm kế hoạch nội bộ</a> </h4></div>
-                    <div class="card-body">
+                    <div class="card-header">
+                        <h4 class="card-title"><?=$admin_title?></h4>
+                        <a class="heading-elements-toggle"><i class="la la-ellipsis-v font-medium-3"></i></a>
+                        <div class="heading-elements">
+                            <ul class="list-inline mb-0">
+                                <li><a class="btn btn-sm btn-outline-blue box-shadow-2 round btn-min-width pull-right" href="<?php echo _URL_ADMIN.'/local.php?act=add&type='.$type?>" target="_blank">Thêm Kế Hoạch</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="card-content">
                         <?php
-                        $para = array('local_users' => $user_id);
-                        foreach ($para AS $paras){
-                            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
-                                $parameters[$paras] = $_REQUEST[$paras];
-                            }
-                        }
-                        if($parameters){
-                            foreach ($parameters as $key => $value) {
-                                $colums[] = '`'.$key .'` = "'. checkInsert($value) .'"';
-                            }
-                            $parameters_list = ' WHERE '.implode(' AND ', $colums);
-                        }
-
-                        // Tạo Url Parameter động
-                        foreach ($parameters as $key => $value) {
-                            $para_url[] = $key .'='. $value;
-                        }
-                        $para_list                      = implode('&', $para_url);
-                        // Tạo Url Parameter động
-                        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
-                        $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_LOCAL, $parameters)/$config_pagenavi['page_row']);
-                        $config_pagenavi['url']         = _URL_ADMIN.'/local.php?'.$para_list.'&';
-                        $page_start                     = ($page-1) * $config_pagenavi['page_row'];
-                        $data   = getGlobalAll(_TABLE_LOCAL, $parameters,array(
-                            'order_by_row'  => 'id',
-                            'order_by_value'=> 'DESC',
-                            'limit_start'   => $page_start,
-                            'limit_number'  => $config_pagenavi['page_row']
-                        ));
-                        echo '<div class="table-responsive">';
-                            echo '<table class="table">';
-                                echo '<thread>';
-                                    echo '<tr>';
-                                        echo '<th width="80%" class="text-left">Tiêu Đề</th>';
-                                        echo '<th width="20%" class="text-center">Thời Gian</th>';
-                                    echo '</tr>';
-                                echo '</thread>';
-                                '<tbody>';
-                                foreach ($data AS $datas){
-                                    echo '<tr>';
-                                    echo '<td class="text-left"><a href="'. _URL_ADMIN .'/local.php?act=detail&id='. $datas['id'] .'">'. $datas['local_title'] .'</a></td>';
-                                    echo '<td class="text-center">'. getViewTime($datas['local_time']) .'</td>';
-                                    echo '</tr>';
-                                }
-                                echo '</tbody>';
-                            echo '</table>';
-                        echo '</div>';
-                        echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';
+                        if(count($data) == 0){
+                            echo '<div class="text-center text-danger">Không có dữ liệu để hiển thị</div><br>';
+                        }else{
                         ?>
+                        <div class="table-responsive">
+                            <table id="recent-orders" class="table table-hover table-xl mb-0">
+                                <thead>
+                                <tr>
+                                    <th class="border-top-0" width="50%">Tiêu đề</th>
+                                    <th class="border-top-0">Người Đăng</th>
+                                    <th class="border-top-0">Đánh Giá</th>
+                                    <th class="border-top-0">Thời Gian</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php
+                                foreach ($data AS $row){
+                                    $user_local = getGlobal(_TABLE_USERS, array('users_id' => $row['local_users']));
+                                    ?>
+                                    <tr>
+                                        <td class="text-truncate"><i class="la la-dot-circle-o success font-medium-1 mr-1"></i> <a href="<?=_URL_ADMIN?>/local.php?act=detail&id=<?=$row['id']?>"><?=$row['local_title']?></a></td>
+                                        <td class="text-truncate">
+                                            <span class="avatar avatar-xs"><img class="box-shadow-2" src="<?php echo $user_local['users_avatar'] ? _URL_HOME.'/'.$user_local['users_avatar'] : 'images/avatar.png' ?>" alt="avatar"></span>
+                                            <span><?=$user_local['users_name']?></span>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            if($row['local_star'] == 0){
+                                                echo '<button type="button" class="btn btn-sm btn-outline-danger round">Chưa đánh giá</button>';
+                                            }
+                                            ?>
+                                        </td>
+                                        <td class="text-truncate"><?=getViewTime($row['local_time'])?></td>
+                                    </tr>
+                                <?php
+                                }
+                                ?>
+                                </tbody>
+                            </table>
+                            <?php echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';?>
+                        </div>
+                        <?php }?>
                     </div>
                 </div>
             </div>
