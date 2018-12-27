@@ -29,7 +29,7 @@ switch ($act){
                                 <span>Kế hoạch cá nhân</span>
                             </div>
                             <div class="media-right p-2 media-middle">
-                                <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'users', 'local_users' => $data_user['users_id']));?></h1>
+                                <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'users', 'local_id' => $data_user['users_id']));?></h1>
                             </div>
                         </div>
                     </div>
@@ -54,7 +54,7 @@ switch ($act){
                                         <span>Kế hoạch nội bộ tập thể</span>
                                     </div>
                                     <div class="media-right p-2 media-middle">
-                                        <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'room', 'local_users' => $data_user['users_room']));?></h1>
+                                        <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'room', 'local_id' => $data_user['users_room']));?></h1>
                                     </div>
                                 </div>
                             </div>
@@ -79,7 +79,7 @@ switch ($act){
                                         <span>Kế hoạch nội bộ tập thể</span>
                                     </div>
                                     <div class="media-right p-2 media-middle">
-                                        <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'room', 'local_users' => $category['id']));?></h1>
+                                        <h1 class="text-white"><?=checkGlobal(_TABLE_LOCAL, array('local_type' => 'room', 'local_id' => $category['id']));?></h1>
                                     </div>
                                 </div>
                             </div>
@@ -257,6 +257,14 @@ switch ($act){
         require_once 'footer.php';
         break;
     case 'add':
+        if ((!in_array($type, array('users', 'room'))) || ($type == 'users' && $id != $data_user['users_id']) || ($type == 'room' && !in_array($data_user['users_level'], array(69,70,72))) || ($type == 'room' && $id != $data_user['users_room'])){
+            $admin_title    = 'Nội dung không tồn tại';
+            require_once 'header.php';
+            echo getAdminPanelError(array('header' => $lang['label_notice'], 'message' => 'Trang không tồn tại'));
+            require_once 'footer.php';
+            break;
+        }
+
         if($submit){
             $local_title 	= isset($_POST['local_title'])      ? trim($_POST['local_title'])   : '';
             $local_content  = isset($_POST['local_content'])    ? trim($_POST['local_content']) : '';
@@ -272,8 +280,9 @@ switch ($act){
                 $data = array(
                     'local_title'       => $local_title,
                     'local_content'     => $local_content,
-                    'local_type'        => 'users',
+                    'local_type'        => $type,
                     'local_users'       => $user_id,
+                    'local_id'          => $id,
                     'local_star'        => 0,
                     'local_star_users'  => 0,
                     'local_status'      => 1,
@@ -327,7 +336,7 @@ switch ($act){
                     }
                 }
                 // Xử lý Upload File
-                header('location:'._URL_ADMIN);
+                header('location:'._URL_ADMIN.'/local.php?act=detail&id='.$add);
             }
         }
 
@@ -381,11 +390,11 @@ switch ($act){
         // Pagination
         foreach ($para AS $paras){
             if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
-                $parameters[$paras] = $_REQUEST[$paras];
+                $parameters[$paras]     = $_REQUEST[$paras];
             }
         }
-        $parameters['local_type']     = $type;
-        $parameters['local_users']    = $id;
+        $parameters['local_type']       = $type;
+        $parameters['local_id']         = $id;
         if($parameters){
             foreach ($parameters as $key => $value) {
                 $colums[] = '`'.$key .'` = "'. checkInsert($value) .'"';
@@ -418,11 +427,22 @@ switch ($act){
                     <div class="card-header">
                         <h4 class="card-title"><?=$admin_title?></h4>
                         <a class="heading-elements-toggle"><i class="la la-ellipsis-v font-medium-3"></i></a>
-                        <div class="heading-elements">
+                        <?php
+                        if($type == 'room' && in_array($data_user['users_level'], array(69,70,72))){
+                            echo '<div class="heading-elements">
                             <ul class="list-inline mb-0">
-                                <li><a class="btn btn-sm btn-outline-blue box-shadow-2 round btn-min-width pull-right" href="<?php echo _URL_ADMIN.'/local.php?act=add&type='.$type?>" target="_blank">Thêm Kế Hoạch</a></li>
+                                <li><a class="btn btn-sm btn-outline-blue box-shadow-2 round btn-min-width pull-right" href="'. _URL_ADMIN.'/local.php?act=add&type='.$type.'&id='. $id .'">Thêm Kế Hoạch</a></li>
                             </ul>
-                        </div>
+                            </div>';
+                        }else if($type == 'users' && $id == $data_user['users_id']){
+                            echo '<div class="heading-elements">
+                            <ul class="list-inline mb-0">
+                                <li><a class="btn btn-sm btn-outline-blue box-shadow-2 round btn-min-width pull-right" href="'. _URL_ADMIN.'/local.php?act=add&type='.$type.'&id='. $id .'">Thêm Kế Hoạch</a></li>
+                            </ul>
+                            </div>';
+                        }
+                        ?>
+
                     </div>
                     <div class="card-content">
                         <?php
