@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 01, 2018 lúc 11:28 AM
+-- Thời gian đã tạo: Th12 27, 2018 lúc 11:13 AM
 -- Phiên bản máy phục vụ: 10.1.35-MariaDB
 -- Phiên bản PHP: 7.2.9
 
@@ -259,7 +259,11 @@ INSERT INTO `dong_files` (`id`, `files_name`, `files_url`, `files_value`, `files
 (11, '1188 BC.doc', 'files/upload/2018/08/1188 BC.doc', 0, 'upload', 265, 1533626172),
 (12, '3324-YTDP-SR.pdf', 'files/upload/2018/08/3324-YTDP-SR.pdf', 0, 'upload', 265, 1533627184),
 (13, '3324-YTDP-SR(1).pdf', 'files/upload/2018/08/3324-YTDP-SR(1).pdf', 0, 'upload', 265, 1533627971),
-(14, 'Y4UHtVbXKTJArDMB1Cuv.doc', 'files/tasks/Y4UHtVbXKTJArDMB1Cuv.doc', 72, 'tasks', 11, 1536825324);
+(14, 'Y4UHtVbXKTJArDMB1Cuv.doc', 'files/tasks/Y4UHtVbXKTJArDMB1Cuv.doc', 72, 'tasks', 11, 1536825324),
+(15, '1.png', 'files/local/1.png', 3, 'local', 7, 1545878829),
+(16, 'thiep.jpg', 'files/local/thiep.jpg', 5, 'local', 7, 1545879445),
+(17, 'thiep.png', 'files/local/thiep.png', 6, 'local', 7, 1545879500),
+(18, '2.png', 'files/upload/2018/12/2.png', 0, 'upload', 7, 1545884125);
 
 -- --------------------------------------------------------
 
@@ -790,6 +794,8 @@ CREATE TABLE `dong_local` (
   `id` int(11) NOT NULL,
   `local_title` varchar(200) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
   `local_content` text CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `local_type` varchar(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL,
+  `local_id` int(11) NOT NULL,
   `local_users` int(11) NOT NULL,
   `local_star` int(11) NOT NULL,
   `local_star_users` int(11) NOT NULL,
@@ -797,6 +803,15 @@ CREATE TABLE `dong_local` (
   `local_date` date NOT NULL,
   `local_time` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Đang đổ dữ liệu cho bảng `dong_local`
+--
+
+INSERT INTO `dong_local` (`id`, `local_title`, `local_content`, `local_type`, `local_id`, `local_users`, `local_star`, `local_star_users`, `local_status`, `local_date`, `local_time`) VALUES
+(4, 'Test kế hoạch cá nhân', '<p>Test kế hoạch c&aacute; nh&acirc;n</p>', 'users', 7, 7, 0, 0, 1, '2018-12-27', 1545879335),
+(5, 'Test kế hoạch xã tiền phong', '<pre style=\"font-family: \'Courier New\'; font-size: 9pt;\"><span style=\"color: #660000; background-color: #f7faff;\">$add</span></pre>', 'room', 140, 7, 0, 0, 1, '2018-12-27', 1545879445),
+(6, 'Test kế hoạch xã tiền phong', '<p>Test kế hoạch x&atilde; tiền phong</p>', 'room', 140, 7, 0, 0, 1, '2018-12-27', 1545879500);
 
 -- --------------------------------------------------------
 
@@ -2410,7 +2425,7 @@ CREATE TABLE `dong_users` (
 INSERT INTO `dong_users` (`users_id`, `users_user`, `users_email`, `users_phone`, `users_pass`, `users_name`, `users_avatar`, `users_level`, `users_manager`, `users_room`, `users_time`, `users_status`) VALUES
 (1, 'nguyenkiendu', 'duttytmelinh@gmail.com', '0986860450', 'e79bffb075a29ae52fd9d6ec758cbece', 'Nguyễn Kiến Dụ', '', 69, 1, 94, 1530606814, 1),
 (5, 'tinhtp', 'dongkinh1992@gmail.com', '', 'e10adc3949ba59abbe56e057f20f883e', 'Tĩnh', '', 80, 1, 47, 1529642174, 1),
-(7, 'dongnv', 'nguyenvandong242@gmail.com', '0966624292', 'e10adc3949ba59abbe56e057f20f883e', 'Nguyễn Văn Đông', 'images/users/3Mjmh8fXpU.jpg', 80, 7, 140, 1532580671, 1),
+(7, 'dongnv', 'nguyenvandong242@gmail.com', '0966624292', 'e10adc3949ba59abbe56e057f20f883e', 'Nguyễn Văn Đông', 'images/users/3Mjmh8fXpU.jpg', 69, 7, 140, 1532580671, 1),
 (8, 'nguyenhuynam', 'nguyenhuynam76@gmail.com', '0968491115', 'e10adc3949ba59abbe56e057f20f883e', 'PGĐ Nguyễn Huy Nam', '', 70, 1, 98, 1531465613, 1),
 (9, 'Lê Thị Hồng', 'hongttytmelinh@gmail.com', '0979218385', 'ea971779fe8df72ccca74ba9467c92c0', 'Lê Thị Hồng', '', 72, 1, 106, 1530591424, 1),
 (10, 'hanghctctv', 'hang23101989@gmail.com', '0989176320', '308a9cfc524adbe5ddea7edaaf953375', 'Nguyễn Thị Hằng Kế toán trưởng', '', 80, 1, 115, 1531987463, 1),
@@ -2760,7 +2775,7 @@ ALTER TABLE `dong_config`
 -- AUTO_INCREMENT cho bảng `dong_files`
 --
 ALTER TABLE `dong_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT cho bảng `dong_group`
@@ -2778,7 +2793,7 @@ ALTER TABLE `dong_iotbutton`
 -- AUTO_INCREMENT cho bảng `dong_local`
 --
 ALTER TABLE `dong_local`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT cho bảng `dong_notification`
