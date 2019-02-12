@@ -2,13 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/../citypost_cms/.idea/citypost.iml" filepath="$PROJECT_DIR$/../citypost_cms/.idea/citypost.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../fb/.idea/fb.iml" filepath="$PROJECT_DIR$/../fb/.idea/fb.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../html/.idea/html.iml" filepath="$PROJECT_DIR$/../html/.idea/html.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../Device_Gps/.idea/maps.iml" filepath="$PROJECT_DIR$/../Device_Gps/.idea/maps.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../order/.idea/order.iml" filepath="$PROJECT_DIR$/../order/.idea/order.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../send_email/.idea/send_email.iml" filepath="$PROJECT_DIR$/../send_email/.idea/send_email.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../social_video/.idea/social_video.iml" filepath="$PROJECT_DIR$/../social_video/.idea/social_video.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/ttytml.iml" filepath="$PROJECT_DIR$/.idea/ttytml.iml" />
     </modules>
   </component>

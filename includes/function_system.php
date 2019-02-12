@@ -6,6 +6,37 @@
  * Time: 20:04
  */
 
+function countFile($file_id, $type = 'file_download'){
+    global $db;
+    $count = $db->select('SUM(group_value) AS total_download')->from(_TABLE_GROUP)->where(array('group_type' => $type, 'group_id' => $file_id))->fetch_first();
+    return ($count['total_download'] > 0 ? $count['total_download'] : 0);
+}
+
+// Tạo Mã Token
+function createToken(){
+    $key_start  = 'DONG';
+    $key_time   = _CONFIG_TIME;
+    $key_end    = 'CHINH';
+    return md5(md5($key_start.$key_time.$key_end));
+}
+
+// Kiểm tra mã token
+function checkToken($token){
+    $arr_token = array();
+    for ($i = 0; $i <= 600; $i++){
+        $time_c         = _CONFIG_TIME - $i;
+        $key_start      = 'DONG';
+        $key_end        = 'CHINH';
+        $arr_token[]    = md5(md5($key_start.$time_c.$key_end));
+    }
+
+    if(in_array($token, $arr_token)){
+        return true;
+    }else{
+        return false;
+    }
+}
+
 /*
  * table: Name table check
  * data: Array data check

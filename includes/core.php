@@ -13,6 +13,11 @@ require_once 'db.php';
 require_once 'function_system.php';
 require_once 'function_view.php';
 require_once 'lang.php';
+require_once 'class_db_mysqli.php';
+require_once 'class.function.php';
+$function = new ttytmlFunction();
+// Đặt các giá trị hằng số cho thông tin kết nối cơ sở dữ liệu
+$db     = new Database(_DB_SERVER, _DB_USER,_DB_PASS,_DB_NAME);
 
 /** Manager Session, Cookie User */
 if ($_COOKIE['user'] && $_COOKIE['pass'])
@@ -49,6 +54,7 @@ define('_TABLE_GROUP', 'dong_group');
 define('_TABLE_TASKS', 'dong_task');
 define('_TABLE_NOTIFICATION', 'dong_notification');
 define('_TABLE_LOCAL', 'dong_local');
+define('_TABLE_FILES', 'dong_files');
 
 define('_URL_ADMIN',_URL_HOME.'/admin');
 define('_URL_SEARCH',_URL_HOME.'/search');
@@ -60,6 +66,7 @@ define('_CONFIG_PAGINATION', 50);
 $_SESSION["back_url"] = $_SERVER["HTTP_REFERER"] ? $_SERVER["HTTP_REFERER"] : _URL_ADMIN;
 define('_URL_BACK', $_SESSION["back_url"]);
 define('_BUTTON_BACK', "<button type='button' class='btn btn-outline-success round' onclick='javascript:location.href=\"". _URL_BACK ."\"'>Quay lại</button>");
+define('_URL_REFERER', $_SERVER['HTTP_REFERER'] ? $_SERVER['HTTP_REFERER'] : _URL_HOME);
 
 
 // Get Parameter
@@ -71,3 +78,12 @@ $type 	    = isset($_REQUEST['type']) 	    ? trim($_REQUEST['type']) 		: '';
 $url 	    = isset($_REQUEST['url']) 	    ? trim($_REQUEST['url']) 		: '';
 $controls   = isset($_REQUEST['controls']) 	? trim($_REQUEST['controls'])   : '';
 $q          = isset($_REQUEST['q']) 	    ? trim($_REQUEST['q'])          : '';
+$token      = isset($_REQUEST['token']) 	? trim($_REQUEST['token'])      : '';
+
+$time_today         = date('Y/m/d', _CONFIG_TIME);
+$time_week_start    = date('Y/m/d', strtotime('monday this week', _CONFIG_TIME));
+$time_week_end      = date('Y/m/d 23:59:59', strtotime('sunday this week', _CONFIG_TIME));
+$time_month_start   = date('Y/m/d', strtotime('first day of this month', _CONFIG_TIME));
+$time_month_end     = date('Y/m/d 23:59:59', strtotime('last day of this month', _CONFIG_TIME));
+$time_year_start    = date('Y/m/d', strtotime('first day of January', _CONFIG_TIME));
+$time_year_end      = date('Y/m/d 23:59:59', strtotime('last day of December', _CONFIG_TIME));

@@ -286,7 +286,7 @@ switch ($act){
                     'local_star'        => 0,
                     'local_star_users'  => 0,
                     'local_status'      => 1,
-                    'local_date'        => date('Y-m-d', time()),
+                    'local_date'        => date('Y/m/d H:i:s', time()),
                     'local_time'        => _CONFIG_TIME
                 );
                 // Thêm Kế Hoạch
@@ -381,44 +381,70 @@ switch ($act){
         break;
     default:
         if($type == 'users'){
-            $user   = getGlobal(_TABLE_USERS, array('users_id' => $id));
-            $admin_title = 'Kế Hoạch Nội Bộ Của '.$user['users_name'];
+            $user           = getGlobal(_TABLE_USERS, array('users_id' => $id));
+            $admin_title    = 'Kế Hoạch Nội Bộ Của '.$user['users_name'];
         }else if($type == 'room'){
-            $room   = getGlobal(_TABLE_CATEGORY, array('id' => $id));
-            $admin_title = 'Kế Hoạch Nội Bộ Của '.$room['category_name'];
-        }
-        // Pagination
-        foreach ($para AS $paras){
-            if(isset($_REQUEST[$paras]) && !empty($_REQUEST[$paras])){
-                $parameters[$paras]     = $_REQUEST[$paras];
-            }
-        }
-        $parameters['local_type']       = $type;
-        $parameters['local_id']         = $id;
-        if($parameters){
-            foreach ($parameters as $key => $value) {
-                $colums[] = '`'.$key .'` = "'. checkInsert($value) .'"';
-            }
-            $parameters_list = ' WHERE '.implode(' AND ', $colums);
+            $room           = getGlobal(_TABLE_CATEGORY, array('id' => $id));
+            $admin_title    = 'Kế Hoạch Nội Bộ Của '.$room['category_name'];
         }
 
-        // Tạo Url Parameter động
-        foreach ($parameters as $key => $value) {
-            $para_url[] = $key .'='. $value;
+        $time                       = (isset($_GET['time']) && !empty($_GET['time'])) ? $_GET['time'] : '';
+
+        // Where
+        $where                      = array();
+        $where['local_type']        = $type;
+        $where['local_id']          = $id;
+        // Product Where
+
+        // Config Pagination
+        $db->select('id')->from(_TABLE_LOCAL)->where($where);
+        if(in_array($time, array('today', 'week', 'month', 'year'))){
+            switch ($time){
+                case 'today':
+                    $db->where('local_date', $time_today);
+                    break;
+                case 'week':
+                    $db->between('local_date', $time_week_start, $time_week_end);
+                    break;
+                case 'month':
+                    $db->between('local_date', $time_month_start, $time_month_end);
+                    break;
+                case 'year':
+                    $db->between('local_date', $time_year_start, $time_year_end);
+                    break;
+            }
         }
-        $para_list                      = implode('&', $para_url);
-        // Tạo Url Parameter động
-        $config_pagenavi['page_row']    = _CONFIG_PAGINATION;
-        $config_pagenavi['page_num']    = ceil(checkGlobal(_TABLE_LOCAL, $parameters)/$config_pagenavi['page_row']);
-        $config_pagenavi['url']         = _URL_ADMIN.'/local.php?'.$para_list.'&';
-        $page_start                     = ($page-1) * $config_pagenavi['page_row'];
-        $data   = getGlobalAll(_TABLE_LOCAL, $parameters,array(
-            'order_by_row'  => 'id',
-            'order_by_value'=> 'DESC',
-            'limit_start'   => $page_start,
-            'limit_number'  => $config_pagenavi['page_row']
-        ));
-        // Pagination
+        $db->fetch();
+        $row_count                  = $db->affected_rows;
+        $pagination['page_row']     = _CONFIG_PAGINATION;
+        $pagination['page_num']     = ceil($row_count/$pagination['page_row']);
+        $pagination['url']          = _URL_ADMIN.'/local.php'.$function->createParameter(array('type' => $type, 'id' => $id, 'page' => '{page}'));
+        $page_start                 = ($page-1) * $pagination['page_row'];
+        // Config Pagination
+
+        // Data
+        $db->from(_TABLE_LOCAL)->where($where);
+        if(in_array($time, array('today', 'week', 'month', 'year'))){
+            switch ($time){
+                case 'today':
+                    $db->where('local_date', $time_today);
+                    break;
+                case 'week':
+                    $db->between('local_date', $time_week_start, $time_week_end);
+                    break;
+                case 'month':
+                    $db->between('local_date', $time_month_start, $time_month_end);
+                    break;
+                case 'year':
+                    $db->between('local_date', $time_year_start, $time_year_end);
+                    break;
+            }
+        }
+        $db->order_by('id', 'DESC');
+        $db->limit(_CONFIG_PAGINATION, $page_start);
+        $data = $db->fetch();
+        // Data
+
         require_once 'header.php';
         ?>
         <div class="row">
@@ -485,7 +511,7 @@ switch ($act){
                                 ?>
                                 </tbody>
                             </table>
-                            <?php echo '<nav aria-label="Page navigation">'.pagination($config_pagenavi).'</nav>';?>
+                            <?php echo '<nav aria-label="Page navigation">'. $function->pagination($pagination) .'</nav>';?>
                         </div>
                         <?php }?>
                     </div>

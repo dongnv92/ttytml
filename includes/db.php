@@ -7,10 +7,15 @@
  */
 
 // Define Config Database
-define('_DB_SERVER', 'localhost');
+/*define('_DB_SERVER', 'localhost');
 define('_DB_USER', 'root');
 define('_DB_PASS', '');
-define('_DB_NAME', 'ttytml');
+define('_DB_NAME', 'ttytml');*/
+
+define('_DB_SERVER', 'localhost');
+define('_DB_USER', 'xoiduaco');
+define('_DB_PASS', 'Nkthanh88...');
+define('_DB_NAME', 'xoiduaco_melinh');
 
 $db_connect = mysqli_connect(_DB_SERVER, _DB_USER, _DB_PASS, _DB_NAME) or die('Cant Connect To Database');
 mysqli_query($db_connect,"SET NAMES 'utf8'");
