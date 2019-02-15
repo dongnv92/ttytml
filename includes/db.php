@@ -27,5 +27,5 @@ while ($table_config_res = mysqli_fetch_array($query_config)) $table_config[$tab
 mysqli_free_result($query_config);
 
 // Define URL
-define('_URL_HOME', $table_config['url_home']);
+define('_URL_HOME', 'http://localhost/dong/ttytml');
 define('_IOT', $table_config['iot']);
