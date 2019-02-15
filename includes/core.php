@@ -55,6 +55,7 @@ define('_TABLE_TASKS', 'dong_task');
 define('_TABLE_NOTIFICATION', 'dong_notification');
 define('_TABLE_LOCAL', 'dong_local');
 define('_TABLE_FILES', 'dong_files');
+define('_TABLE_WIKI', 'dong_wiki');
 
 define('_URL_ADMIN',_URL_HOME.'/admin');
 define('_URL_SEARCH',_URL_HOME.'/search');
