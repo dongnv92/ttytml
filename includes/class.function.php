@@ -8,6 +8,21 @@
 
 class ttytmlFunction{
 
+    function levelDetail($level){
+        $return = '';
+        switch ($level){
+            case 69:
+                $return = 'GD';
+                break;
+            case 70:
+                $return = 'PGD';
+                break;
+            case 72:
+                $return = 'TP';
+                break;
+        }
+        return $return;
+    }
     function getStatics($action, $value = '', $option = ''){
         global $db, $time_today, $time_week_start, $time_week_end, $time_month_start, $time_month_end, $time_year_start, $time_year_end;
         $statics = 0;

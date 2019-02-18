@@ -12,6 +12,7 @@ if(!$user_id){
 $active_menu = 'wiki';
 switch ($act){
     case 'add':
+
         if($submit){
             $wiki_title 	= isset($_POST['wiki_title'])       ? trim($_POST['wiki_title'])        : '';
             $wiki_content 	= isset($_POST['wiki_content'])     ? trim($_POST['wiki_content'])      : '';
@@ -126,8 +127,16 @@ switch ($act){
                             <fieldset class="form-group">
                                 <select class="form-control" name="wiki_room">
                                     <?php
-                                    $data = $db->select()->from(_TABLE_CATEGORY)->where('category_type', 'room')->fetch();
-                                    showCategories(array('data' => $data, 'type' => 'select', 'selected' => $data_user['users_room']))
+                                    if(in_array($function->levelDetail($data_user['users_level']), array('GD', 'PGD'))){
+                                        $data = $db->select()->from(_TABLE_CATEGORY)->where('category_type', 'room')->fetch();
+                                        foreach ($data as $room){
+                                            echo '<option value="'. $room['id'] .'" '. ($wiki_room == $room['id'] ? 'selected' : '') .'>'. $room['category_name'] .'</option>';
+                                        }
+                                    }
+                                    if(in_array($function->levelDetail($data_user['users_level']), array('TP'))){
+                                        $data = $db->select()->from(_TABLE_CATEGORY)->where('id', $data_user['users_room'])->fetch_first();
+                                        echo '<option value="'. $data['id'] .'">'. $data['category_name'] .'</option>';
+                                    }
                                     ?>
                                 </select>
                             </fieldset>
