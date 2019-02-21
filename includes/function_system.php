@@ -323,7 +323,7 @@ function checkRole($page){
     if($value[$page] == 1){
         return true;
     }else{
-        if($data_user['users_id'] == 7){
+        if(in_array($data_user['users_id'], array(7,23))){
             return true;
         }else{
             return false;
