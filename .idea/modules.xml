@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../citypost_cms/.idea/citypost.iml" filepath="$PROJECT_DIR$/../citypost_cms/.idea/citypost.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/ttytml.iml" filepath="$PROJECT_DIR$/.idea/ttytml.iml" />
     </modules>
   </component>

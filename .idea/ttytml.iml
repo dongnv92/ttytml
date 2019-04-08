@@ -6,5 +6,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="send_email" />
     <orderEntry type="module" module-name="maps" />
+    <orderEntry type="module" module-name="citypost" />
   </component>
 </module>
