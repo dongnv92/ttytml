@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="7e30726a-6719-404b-9ddf-6e45f8ba0ede" name="TTYTML" url="http://trungtamytemelinh.com">
+        <fileTransfer host="184.154.46.57" port="21" rootFolder="/public_html/add_domain/melinh">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+          <option name="port" value="21" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
