@@ -7,6 +7,16 @@
  */
 
 class ttytmlFunction{
+    function checkRole($page){
+        global $data_user, $db;
+        $role   = $db->select('category_info')->from(_TABLE_CATEGORY)->where('id', $data_user['users_level'])->fetch_first(); //getGlobal('dong_category', array('id' => $data_user['users_level']));
+        $value  = unserialize($role['category_info']);
+        if($value[$page] == 1 || in_array($data_user['users_id'], array(7,23))){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
     function levelDetail($level){
         $return = '';

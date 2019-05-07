@@ -320,14 +320,10 @@ function checkRole($page){
     global $data_user;
     $role   = getGlobal('dong_category', array('id' => $data_user['users_level']));
     $value  = unserialize($role['category_info']);
-    if($value[$page] == 1){
+    if($value[$page] == 1 || in_array($data_user['users_id'], array(7,23))){
         return true;
     }else{
-        if(in_array($data_user['users_id'], array(7,23))){
-            return true;
-        }else{
-            return false;
-        }
+        return false;
     }
 }
 
